@@ -2,6 +2,7 @@ import pygame
 from typing import List, Dict, Optional, Any
 from ..camera import Camera
 from ..resource_loader import ResourceLoader
+from .collision_system import CollisionSystem
 
 class BaseScene:
     def __init__(self, num_threads: int = None):
@@ -14,6 +15,7 @@ class BaseScene:
         self._loading_progress = 0
         self.camera = None  # Will be initialized when interface is set
         self.resource_loader = ResourceLoader()  # Get the singleton instance
+        self.collision_system = CollisionSystem()  # Initialize collision system
         
     def initialize(self):
         """Initialize scene resources. Called once when scene is added to manager."""
@@ -97,6 +99,9 @@ class BaseScene:
             if entity.active:
                 entity.tick()
 
+        # Update collision system
+        self.collision_system.update(self.entities)
+
     def render(self, screen: pygame.Surface):
         """Render the scene"""
         if not self._is_loaded:
@@ -166,3 +171,4 @@ class BaseScene:
         self._resources.clear()
         self._is_loaded = False
         self._loading_progress = 0
+        self.collision_system.clear()  # Clear collision system

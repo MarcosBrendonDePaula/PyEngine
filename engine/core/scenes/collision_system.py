@@ -14,6 +14,13 @@ class CollisionSystem:
         physics1 = entity1.get_component(Physics)
         physics2 = entity2.get_component(Physics)
 
+        # Call on_collision handlers if they exist
+        if hasattr(entity1, 'on_collision'):
+            entity1.on_collision(entity2)
+        if hasattr(entity2, 'on_collision'):
+            entity2.on_collision(entity1)
+
+        # Physics resolution
         if physics1 and not physics1.is_kinematic:
             physics1.resolve_collision(collider2)
         if physics2 and not physics2.is_kinematic:
@@ -25,11 +32,16 @@ class CollisionSystem:
         old_collision_pairs = self._collision_pairs.copy()
         self._collision_pairs.clear()
 
-        # Get all entities with colliders
-        entities_with_colliders = [
-            entity for entity in entities
-            if entity.get_component(Collider) is not None
-        ]
+        # Get all non-UI entities with colliders
+        entities_with_colliders = []
+        for entity in entities:
+            if hasattr(entity, 'get_component') and entity.get_component(Collider) is not None:
+                # Skip UI entities
+                if hasattr(entity, 'scene') and entity.scene:
+                    ui_entities = entity.scene.get_entities_by_group("ui")
+                    if entity in ui_entities:
+                        continue
+                entities_with_colliders.append(entity)
 
         # Check each pair of entities
         for i in range(len(entities_with_colliders)):

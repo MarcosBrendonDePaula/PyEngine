@@ -13,19 +13,18 @@ class Player(Entity):
         super().__init__(x, y)
         # Visual representation (colored square)
         self.renderer = self.add_component(RectangleRenderer(40, 40, color))
-        # Physics for movement
-        self.physics = self.add_component(Physics(
-            mass=1.0,
-            friction=0.1
-        ))
-        self.physics.gravity = 0  # No gravity for top-down movement
+        # Physics for movement with collision response
+        self.physics = self.add_component(Physics(mass=1.0, gravity=0, friction=0.8))
+        self.physics.is_kinematic = False  # Enable collision response
+        self.physics.restitution = 0.5  # Add bounce to collisions
         # Collision detection
         self.collider = self.add_component(Collider(40, 40))
         # Store controls configuration
         self.controls = controls
-        self.speed = 5.0
+        self.speed = 8.0  # Increased speed to compensate for friction
         self.health = 100
         self.player_num = player_num
+        self.knockback_force = 5.0  # Increased knockback force
         
     def handle_event(self, event: pygame.event.Event):
         super().handle_event(event)
@@ -49,6 +48,13 @@ class Player(Entity):
         if keys[self.controls['down']]:
             dy += self.speed
             
+        # Normalize diagonal movement
+        if dx != 0 and dy != 0:
+            # Pythagoras to maintain consistent speed in all directions
+            factor = self.speed / (2 ** 0.5)
+            dx *= factor / self.speed
+            dy *= factor / self.speed
+            
         self.physics.set_velocity(dx, dy)
     
     def attack(self):
@@ -70,6 +76,20 @@ class Player(Entity):
             self.scene.logger.log(f"Player {self.player_num} took {amount} damage!", "warning", 2.0)
         if self.health <= 0 and self.scene:
             self.scene.player_defeated(self)
+            
+    def on_collision(self, other_entity):
+        """Handle collision with other entities"""
+        if isinstance(other_entity, Player):
+            # Calculate direction from this player to other player
+            direction = pygame.math.Vector2(
+                other_entity.position.x - self.position.x,
+                other_entity.position.y - self.position.y
+            )
+            if direction.length() > 0:
+                direction.normalize_ip()
+                # Apply strong knockback in opposite direction
+                self.physics.apply_impulse(-direction.x * self.knockback_force, 
+                                        -direction.y * self.knockback_force)
 
 class AttackHitbox(Entity):
     def __init__(self, x: float, y: float, owner: Player):
@@ -143,7 +163,7 @@ class MultiplayerScene(BaseScene):
         self.add_entity(self.p2_health, "ui")
     
     def update(self):
-        super().update()
+        super().update()  # This now includes collision system update
         # Update health bars
         self.p1_health.progress = self.player1.health / 100
         self.p2_health.progress = self.player2.health / 100
