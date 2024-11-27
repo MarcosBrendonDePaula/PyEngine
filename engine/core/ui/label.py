@@ -20,6 +20,11 @@ class Label(UIElement):
         
         super().__init__(x, y, width, height)
         
+        # Add Entity-like attributes
+        self.active = True
+        self.scene = None
+        self.components = {}
+        
     def set_text(self, text: str):
         """Update the label's text"""
         self.text = text
@@ -32,13 +37,16 @@ class Label(UIElement):
         """Set the text color"""
         self.text_color = color
         
-    def render(self, screen: pygame.Surface):
+    def render(self, screen: pygame.Surface, offset: Tuple[int, int] = (0, 0)):
         """Render the label"""
         if not self.visible:
             return
             
         # Get absolute position for rendering
         abs_x, abs_y = self.get_absolute_position()
+        # Apply offset
+        abs_x += offset[0]
+        abs_y += offset[1]
         
         # Draw background if set
         if self.background_color is not None:
@@ -69,3 +77,13 @@ class Label(UIElement):
             print(f"Error rendering text: {e}")
             print(f"Text: {self.text}")
             print(f"Color: {self.text_color}")
+            
+    def tick(self):
+        """Update method to be called each frame"""
+        if not self.active:
+            return
+            
+        # Update components if any
+        for component in self.components.values():
+            if component.enabled:
+                component.tick()

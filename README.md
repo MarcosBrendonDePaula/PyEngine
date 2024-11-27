@@ -19,12 +19,19 @@ A high-performance 2D game engine built with Python and Pygame, featuring multi-
 - **Collision Detection**: Rectangle-based collision system with layers and masks
 
 ### User Interface
-Comprehensive UI system with 15+ ready-to-use components:
+Comprehensive UI system with 15+ ready-to-use components, all fully integrated with the Entity system:
 - **Basic Controls**: Buttons, Labels, Panels, Progress Bars
 - **Input Elements**: Text Input, Multiline Input, Select, Radio Buttons
 - **Layout Components**: Grid, ScrollView, Tabs, TitledPanel
 - **Advanced Features**: HTML View, Tooltips, Modal Dialogs, Menus
 - **Interactive Elements**: Sliders, Toggles, Image Display
+
+Key UI Features:
+- Full Entity system integration (components, scene management, etc.)
+- Hierarchical layout system with parent-child relationships
+- Automatic positioning and scaling
+- Event handling and propagation
+- Customizable styling and theming
 
 ## Installation
 
@@ -36,7 +43,52 @@ pip install pygame
 
 ## Quick Start
 
-### Example 1: Platform Game
+### Example 1: Basic UI Usage
+```python
+from engine import create_engine
+from engine.core.scenes.base_scene import BaseScene
+from engine.core.ui.panel import Panel
+from engine.core.ui.button import Button
+from engine.core.ui.label import Label
+
+class MenuScene(BaseScene):
+    def __init__(self):
+        super().__init__()
+        
+        # Create main panel
+        panel = Panel(20, 20, 300, 400)
+        panel.set_style(
+            background_color=(50, 50, 50),
+            border_color=(255, 255, 255),
+            border_width=2
+        )
+        
+        # Add title label
+        title = Label(10, 10, "Main Menu", font_size=32)
+        title.set_text_color((255, 255, 255))
+        panel.add_child(title)
+        
+        # Add interactive button
+        def on_click():
+            print("Button clicked!")
+            
+        button = Button(10, 60, 280, 40, "Start Game")
+        button.on_click = on_click
+        panel.add_child(button)
+        
+        # Add panel to scene
+        self.add_entity(panel, "ui")
+
+def main():
+    engine = create_engine("UI Demo", 800, 600)
+    engine.set_scene("menu", MenuScene())
+    engine.run()
+
+if __name__ == "__main__":
+    main()
+```
+
+### Example 2: Platform Game
 ```python
 from engine import create_engine
 from engine.core.scenes.base_scene import BaseScene
@@ -115,17 +167,7 @@ if __name__ == "__main__":
     main()
 ```
 
-This platform game example demonstrates:
-- Physics with gravity and jumping
-- Collision detection between player and platforms
-- Keyboard controls for movement
-- Simple game scene setup
-
-Controls:
-- Left/Right arrows: Move
-- Space: Jump
-
-### Example 2: Local Multiplayer Game
+### Example 3: Local Multiplayer Game
 ```python
 from engine import create_engine
 from engine.core.scenes.base_scene import BaseScene
@@ -288,41 +330,58 @@ if __name__ == "__main__":
     main()
 ```
 
-This multiplayer game example demonstrates:
-- Local multiplayer with shared keyboard controls
-- Simple combat mechanics with attacks and health
-- Basic UI for health display
-- Game state management (win conditions and reset)
-- Entity collision for attack detection
-- Different control schemes for each player
+### Example 4: UI with Entity Integration
+```python
+from engine import create_engine
+from engine.core.scenes.base_scene import BaseScene
+from engine.core.ui.label import Label
+from engine.core.components.physics import Physics
 
-Player 1 (Blue):
-- Movement: WASD keys
-- Attack: Space bar
+class PhysicsLabel(Label):
+    def __init__(self, x: int, y: int, text: str):
+        super().__init__(x, y, text)
+        # Add physics to make the label fall
+        self.physics = self.add_component(Physics(
+            mass=1.0,
+            gravity=0.5
+        ))
 
-Player 2 (Green):
-- Movement: Arrow keys
-- Attack: Enter key
+class PhysicsScene(BaseScene):
+    def __init__(self):
+        super().__init__()
+        # Create physics-enabled labels
+        for i in range(5):
+            label = PhysicsLabel(100 + i * 100, 0, f"Label {i}")
+            self.add_entity(label, "ui")
+
+def main():
+    engine = create_engine("Physics UI Demo", 800, 600)
+    engine.set_scene("demo", PhysicsScene())
+    engine.run()
+
+if __name__ == "__main__":
+    main()
+```
 
 ## Advanced Features
 
-### Physics System
+### UI System Integration
 ```python
-# Create a physics-enabled entity
-physics = entity.add_component(Physics(
-    mass=1.0,    # Entity mass
-    gravity=0.5, # Gravity scale
-    friction=0.1 # Surface friction
-))
+# Create a UI element with physics
+label = Label(100, 100, "Physics Label")
+physics = label.add_component(Physics(mass=1.0))
 
-# Apply forces and impulses
-physics.apply_force(0, -10)  # Continuous force
-physics.apply_impulse(5, 0)  # Instant force
-physics.set_velocity(3, 0)   # Direct velocity
+# Add custom components to UI elements
+class CustomBehavior(Component):
+    def tick(self):
+        # Custom update logic
+        pass
 
-# Configure physics behavior
-physics.set_kinematic(True)  # Ignore forces
-physics.terminal_velocity = 10.0  # Max speed
+label.add_component(CustomBehavior())
+
+# UI elements in the scene system
+scene.add_entity(label, "ui")  # Add to UI group
+scene.add_entity(label, "physics")  # Add to physics group too
 ```
 
 ### Scene Management
@@ -337,36 +396,6 @@ engine.set_scene("game", transition=True)
 # Share data between scenes
 scene_manager.store_persistent_data("score", 100)
 score = scene_manager.get_persistent_data("score", 0)
-```
-
-### UI System Usage
-```python
-from engine.core.ui.panel import Panel
-from engine.core.ui.button import Button
-from engine.core.ui.label import Label
-from engine.core.ui.modal import MessageBox
-
-class MenuScene(BaseScene):
-    def __init__(self):
-        super().__init__()
-        
-        # Create main panel
-        panel = Panel(20, 20, 300, 400)
-        
-        # Add title
-        title = Label(10, 10, "Main Menu")
-        panel.add_child(title)
-        
-        # Add button with click handler
-        def start_game():
-            MessageBox("Game", "Starting new game...").show()
-            
-        button = Button(10, 50, 200, 40, "Start Game")
-        button.on_click = start_game
-        panel.add_child(button)
-        
-        # Add panel to scene
-        self.add_entity(panel, "ui")
 ```
 
 ### Resource Management
@@ -397,6 +426,7 @@ class GameScene(BaseScene):
 5. Implement culling for off-screen entities
 6. Utilize the scene manager's loading system for smooth transitions
 7. Take advantage of the component system for modular and reusable code
+8. Group UI elements appropriately in scenes for optimal updating
 
 ## Contributing
 
