@@ -4,6 +4,7 @@ from engine.core.scenes.base_scene import BaseScene
 from engine.core.entity import Entity
 from engine.core.components.directional_light import DirectionalLight
 from engine.core.components.rectangle_renderer import RectangleRenderer
+from engine.core.components.collider import PolygonCollider
 
 class Wall(Entity):
     def __init__(self, points: list, color: tuple = (80, 80, 90)):
@@ -14,6 +15,11 @@ class Wall(Entity):
         
         self.points = points
         self.color = color
+        
+        # Add collider for light blocking
+        self.collider = self.add_component(PolygonCollider(
+            [(x - center_x, y - center_y) for x, y in points]  # Convert to local coordinates
+        ))
         
         # Add rectangle renderer for visualization
         width = max(x for x, y in points) - min(x for x, y in points)
@@ -74,9 +80,9 @@ class DirectionalLightDemo(BaseScene):
             intensity=1.5,  # Higher intensity
             angle=45
         )
-        # Update light with wall polygons
-        wall_polygons = [wall.points for wall in self.walls]
-        self.light.update_obstacles(wall_polygons)
+        # Update light with wall colliders
+        wall_colliders = [wall.collider for wall in self.walls]
+        self.light.update_colliders(wall_colliders)
         
         self.light_entity.add_component(self.light)
         self.add_entity(self.light_entity, "lights")
