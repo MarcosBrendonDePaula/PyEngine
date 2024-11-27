@@ -19,15 +19,21 @@ A high-performance 2D game engine built with Python and Pygame, featuring multi-
 - **Collision Detection**: Rectangle-based collision system with layers and masks
 
 ### User Interface
-Comprehensive UI system with 15+ ready-to-use components, all fully integrated with the Entity system:
-- **Basic Controls**: Buttons, Labels, Panels, Progress Bars
+Comprehensive UI system with 15+ ready-to-use components, featuring dual compatibility with both UIElement and Entity systems:
+- **Basic Controls**: 
+  - Buttons, Labels, Panels
+  - Progress Bars (supports both UI hierarchy and scene-based usage)
+  - Labels (supports both UI hierarchy and scene-based usage)
 - **Input Elements**: Text Input, Multiline Input, Select, Radio Buttons
 - **Layout Components**: Grid, ScrollView, Tabs, TitledPanel
 - **Advanced Features**: HTML View, Tooltips, Modal Dialogs, Menus
 - **Interactive Elements**: Sliders, Toggles, Image Display
 
 Key UI Features:
-- Full Entity system integration (components, scene management, etc.)
+- Dual System Integration:
+  - Full UIElement functionality (parent-child relationships, hierarchical layout)
+  - Full Entity system compatibility (components, scene management)
+  - Seamless usage in both UI hierarchies and game scenes
 - Hierarchical layout system with parent-child relationships
 - Automatic positioning and scaling
 - Event handling and propagation
@@ -50,6 +56,7 @@ from engine.core.scenes.base_scene import BaseScene
 from engine.core.ui.panel import Panel
 from engine.core.ui.button import Button
 from engine.core.ui.label import Label
+from engine.core.ui.progress_bar import ProgressBar
 
 class MenuScene(BaseScene):
     def __init__(self):
@@ -66,13 +73,19 @@ class MenuScene(BaseScene):
         # Add title label
         title = Label(10, 10, "Main Menu", font_size=32)
         title.set_text_color((255, 255, 255))
-        panel.add_child(title)
+        panel.add_child(title)  # Add to UI hierarchy
+        
+        # Add progress bar
+        progress = ProgressBar(10, 60, 280, 20)
+        progress.set_colors((0, 255, 0))  # Green progress
+        progress.progress = 0.75  # Set to 75%
+        panel.add_child(progress)  # Add to UI hierarchy
         
         # Add interactive button
         def on_click():
             print("Button clicked!")
             
-        button = Button(10, 60, 280, 40, "Start Game")
+        button = Button(10, 90, 280, 40, "Start Game")
         button.on_click = on_click
         panel.add_child(button)
         

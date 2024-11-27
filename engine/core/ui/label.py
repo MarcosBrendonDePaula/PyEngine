@@ -20,7 +20,7 @@ class Label(UIElement):
         
         super().__init__(x, y, width, height)
         
-        # Add Entity-like attributes
+        # Entity-like properties for scene compatibility
         self.active = True
         self.scene = None
         self.components = {}
@@ -44,9 +44,6 @@ class Label(UIElement):
             
         # Get absolute position for rendering
         abs_x, abs_y = self.get_absolute_position()
-        # Apply offset
-        abs_x += offset[0]
-        abs_y += offset[1]
         
         # Draw background if set
         if self.background_color is not None:
@@ -78,8 +75,12 @@ class Label(UIElement):
             print(f"Text: {self.text}")
             print(f"Color: {self.text_color}")
             
+        # Render children
+        for child in self.children:
+            child.render(screen, offset)
+            
     def tick(self):
-        """Update method to be called each frame"""
+        """Update method for scene compatibility"""
         if not self.active:
             return
             
@@ -87,3 +88,15 @@ class Label(UIElement):
         for component in self.components.values():
             if component.enabled:
                 component.tick()
+                
+    def handle_event(self, event: pygame.event.Event):
+        """Handle events for both UI and scene compatibility"""
+        if not self.enabled or not self.visible:
+            return False
+            
+        # Handle children events first (in reverse order for proper z-order)
+        for child in reversed(self.children):
+            if child.handle_event(event):
+                return True
+                
+        return False

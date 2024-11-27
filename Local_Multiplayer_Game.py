@@ -4,6 +4,7 @@ from engine.core.entity import Entity
 from engine.core.components.rectangle_renderer import RectangleRenderer
 from engine.core.components.physics import Physics
 from engine.core.components.collider import Collider
+from engine.core.ui.progress_bar import ProgressBar
 import pygame
 
 class Player(Entity):
@@ -116,21 +117,21 @@ class MultiplayerScene(BaseScene):
         self.create_health_displays()
     
     def create_health_displays(self):
-        from engine.core.ui.label import Label
-        
-        # Player 1 health
-        self.p1_health = Label(20, 20, "P1: 100")
+        # Player 1 health bar (blue)
+        self.p1_health = ProgressBar(20, 20, 200, 20)
+        self.p1_health.set_colors((0, 0, 255))  # Blue progress
         self.add_entity(self.p1_health, "ui")
         
-        # Player 2 health
-        self.p2_health = Label(700, 20, "P2: 100")
+        # Player 2 health bar (green)
+        self.p2_health = ProgressBar(580, 20, 200, 20)
+        self.p2_health.set_colors((0, 255, 0))  # Green progress
         self.add_entity(self.p2_health, "ui")
     
     def update(self):
         super().update()
-        # Update health displays
-        self.p1_health.text = f"P1: {self.player1.health}"
-        self.p2_health.text = f"P2: {self.player2.health}"
+        # Update health bars
+        self.p1_health.progress = self.player1.health / 100
+        self.p2_health.progress = self.player2.health / 100
     
     def player_defeated(self, player):
         from engine.core.ui.modal import MessageBox
