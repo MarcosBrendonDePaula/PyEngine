@@ -1,25 +1,25 @@
 import pygame
 from engine.core.scenes.base_scene import BaseScene
 from engine.core.entity import Entity
-from engine.core.ui.progress_bar import ProgressBar
-from engine.core.ui.input import Input
-from engine.core.ui.select import Select
-from engine.core.ui.input_select import InputSelect
-from engine.core.ui.radio_button import RadioGroup
-from engine.core.ui.label import Label
-from engine.core.ui.html_view import HTMLView
-from engine.core.ui.slider import Slider
-from engine.core.ui.toggle import Toggle
-from engine.core.ui.tooltip import TooltipMixin, Tooltip
-from engine.core.ui.modal import MessageBox, ConfirmDialog
-from engine.core.ui.tabs import Tabs
-from engine.core.ui.menu import Menu, MenuItem
-from engine.core.ui.grid import Grid, GridColumn
-from engine.core.ui.image import Image, Icon
-from engine.core.ui.scrollview import ScrollView
-from engine.core.ui.titled_panel import TitledPanel
-from engine.core.ui.button import Button
-from engine.core.ui.multiline_input import MultilineInput
+from engine.core.components.ui.progress_bar import ProgressBar
+from engine.core.components.ui.input import Input
+from engine.core.components.ui.select import Select
+from engine.core.components.ui.input_select import InputSelect
+from engine.core.components.ui.radio_button import RadioGroup
+from engine.core.components.ui.label import Label
+from engine.core.components.ui.html_view import HTMLView
+from engine.core.components.ui.slider import Slider
+from engine.core.components.ui.toggle import Toggle
+from engine.core.components.ui.tooltip import TooltipMixin, Tooltip
+from engine.core.components.ui.modal import MessageBox, ConfirmDialog
+from engine.core.components.ui.tabs import Tabs
+from engine.core.components.ui.menu import Menu, MenuItem
+from engine.core.components.ui.grid import Grid, GridColumn
+from engine.core.components.ui.image import Image, Icon
+from engine.core.components.ui.scrollview import ScrollView
+from engine.core.components.ui.titled_panel import TitledPanel
+from engine.core.components.ui.button import Button
+from engine.core.components.ui.multiline_input import MultilineInput
 
 class TooltipButton(Button, TooltipMixin):
     def __init__(self, x: int, y: int, width: int, height: int, 

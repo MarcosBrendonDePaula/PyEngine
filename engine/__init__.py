@@ -50,25 +50,25 @@ def create_engine(title: str = "PyEngine Game", width: int = 800, height: int = 
     return Engine(title, width, height, num_threads)
 
 # Add UI components to exports
-from .core.ui.button import Button
-from .core.ui.label import Label
-from .core.ui.panel import Panel
-from .core.ui.progress_bar import ProgressBar
-from .core.ui.input import Input
-from .core.ui.select import Select
-from .core.ui.input_select import InputSelect
-from .core.ui.radio_button import RadioGroup
-from .core.ui.html_view import HTMLView
-from .core.ui.slider import Slider
-from .core.ui.toggle import Toggle
-from .core.ui.tooltip import TooltipMixin
-from .core.ui.modal import Modal, MessageBox, ConfirmDialog
-from .core.ui.tabs import Tabs
-from .core.ui.menu import Menu, MenuItem
-from .core.ui.grid import Grid, GridColumn
-from .core.ui.image import Image, Icon
-from .core.ui.scrollview import ScrollView
-from .core.ui.titled_panel import TitledPanel
+from .core.components.ui.button import Button
+from .core.components.ui.label import Label
+from .core.components.ui.panel import Panel
+from .core.components.ui.progress_bar import ProgressBar
+from .core.components.ui.input import Input
+from .core.components.ui.select import Select
+from .core.components.ui.input_select import InputSelect
+from .core.components.ui.radio_button import RadioGroup
+from .core.components.ui.html_view import HTMLView
+from .core.components.ui.slider import Slider
+from .core.components.ui.toggle import Toggle
+from .core.components.ui.tooltip import TooltipMixin
+from .core.components.ui.modal import Modal, MessageBox, ConfirmDialog
+from .core.components.ui.tabs import Tabs
+from .core.components.ui.menu import Menu, MenuItem
+from .core.components.ui.grid import Grid, GridColumn
+from .core.components.ui.image import Image, Icon
+from .core.components.ui.scrollview import ScrollView
+from .core.components.ui.titled_panel import TitledPanel
 
 __all__ = [
     # Core components

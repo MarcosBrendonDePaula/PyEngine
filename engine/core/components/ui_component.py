@@ -1,9 +1,9 @@
 import pygame
 from ..component import Component
-from ..ui.ui_element import UIElement
-from ..ui.panel import Panel
-from ..ui.button import Button
-from ..ui.label import Label
+from .ui.ui_element import UIElement
+from .ui.panel import Panel
+from .ui.button import Button
+from .ui.label import Label
 
 class UIComponent(Component):
     def __init__(self):

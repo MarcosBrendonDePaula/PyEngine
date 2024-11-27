@@ -5,7 +5,7 @@ from engine.core.components.rectangle_renderer import RectangleRenderer
 from engine.core.components.physics import Physics
 from engine.core.components.collider import Collider
 from engine.core.components.log_component import LogComponent
-from engine.core.ui.progress_bar import ProgressBar
+from engine.core.components.ui.progress_bar import ProgressBar
 import pygame
 
 class Player(Entity):
@@ -169,7 +169,7 @@ class MultiplayerScene(BaseScene):
         self.p2_health.progress = self.player2.health / 100
     
     def player_defeated(self, player):
-        from engine.core.ui.modal import MessageBox
+        from engine.core.components.ui.modal import MessageBox
         
         winner = "Player 1" if player == self.player2 else "Player 2"
         MessageBox("Game Over", f"{winner} Wins!").show()
