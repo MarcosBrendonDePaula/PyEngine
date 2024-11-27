@@ -36,10 +36,96 @@ pip install pygame
 
 ## Quick Start
 
-### Simple Platform Game
-[Previous platform game example remains unchanged...]
+### Example 1: Platform Game
+```python
+from engine import create_engine
+from engine.core.scenes.base_scene import BaseScene
+from engine.core.entity import Entity
+from engine.core.components.rectangle_renderer import RectangleRenderer
+from engine.core.components.physics import Physics
+from engine.core.components.collider import Collider
+from engine.core.components.keyboard_controller import KeyboardController
+import pygame
 
-### Local Multiplayer Game
+# Create player entity
+class Player(Entity):
+    def __init__(self, x: float = 0, y: float = 0):
+        super().__init__(x, y)
+        # Red square for player
+        self.renderer = self.add_component(RectangleRenderer(40, 40, (255, 0, 0)))
+        # Add physics with gravity
+        self.physics = self.add_component(Physics(
+            mass=1.0,
+            gravity=0.5,
+            friction=0.1
+        ))
+        # Add collision
+        self.collider = self.add_component(Collider(40, 40))
+        self.collider.set_collision_layer(0)  # Player layer
+        self.collider.set_collision_mask(1)   # Collide with platforms
+        # Add keyboard control
+        self.controller = self.add_component(KeyboardController(speed=5.0))
+        
+    def jump(self):
+        if self.physics.is_grounded:
+            self.physics.apply_impulse(0, -12.0)  # Upward impulse
+
+# Create platform entity
+class Platform(Entity):
+    def __init__(self, x: float, y: float, width: float, height: float):
+        super().__init__(x, y)
+        # Green rectangle for platform
+        self.renderer = self.add_component(RectangleRenderer(width, height, (0, 255, 0)))
+        # Add collision
+        self.collider = self.add_component(Collider(width, height))
+        self.collider.set_collision_layer(1)  # Platform layer
+        # Make it static
+        self.physics = self.add_component(Physics())
+        self.physics.set_kinematic(True)
+
+# Create game scene
+class PlatformScene(BaseScene):
+    def __init__(self):
+        super().__init__()
+        # Create player
+        self.player = Player(400, 300)
+        self.add_entity(self.player, "player")
+        
+        # Create platforms
+        # Ground
+        self.add_entity(Platform(400, 550, 800, 40), "platforms")
+        # Floating platforms
+        self.add_entity(Platform(200, 400, 200, 20), "platforms")
+        self.add_entity(Platform(600, 300, 200, 20), "platforms")
+        self.add_entity(Platform(400, 200, 200, 20), "platforms")
+    
+    def handle_event(self, event):
+        super().handle_event(event)
+        # Handle jumping with space bar
+        if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
+            self.player.jump()
+
+# Run the game
+def main():
+    engine = create_engine("Platform Game", 800, 600)
+    engine.set_scene("game", PlatformScene())
+    engine.run()
+
+if __name__ == "__main__":
+    main()
+```
+
+This platform game example demonstrates:
+- Physics with gravity and jumping
+- Collision detection between player and platforms
+- Keyboard controls for movement
+- Simple game scene setup
+
+Controls:
+- Left/Right arrows: Move
+- Space: Jump
+
+### Example 2: Local Multiplayer Game
 ```python
 from engine import create_engine
 from engine.core.scenes.base_scene import BaseScene
@@ -202,7 +288,7 @@ if __name__ == "__main__":
     main()
 ```
 
-This example demonstrates:
+This multiplayer game example demonstrates:
 - Local multiplayer with shared keyboard controls
 - Simple combat mechanics with attacks and health
 - Basic UI for health display
@@ -218,4 +304,104 @@ Player 2 (Green):
 - Movement: Arrow keys
 - Attack: Enter key
 
-[Rest of the README remains unchanged...]
+## Advanced Features
+
+### Physics System
+```python
+# Create a physics-enabled entity
+physics = entity.add_component(Physics(
+    mass=1.0,    # Entity mass
+    gravity=0.5, # Gravity scale
+    friction=0.1 # Surface friction
+))
+
+# Apply forces and impulses
+physics.apply_force(0, -10)  # Continuous force
+physics.apply_impulse(5, 0)  # Instant force
+physics.set_velocity(3, 0)   # Direct velocity
+
+# Configure physics behavior
+physics.set_kinematic(True)  # Ignore forces
+physics.terminal_velocity = 10.0  # Max speed
+```
+
+### Scene Management
+```python
+# Create and manage scenes
+engine.add_scene("menu", MenuScene())
+engine.add_scene("game", GameScene())
+
+# Switch scenes with transition
+engine.set_scene("game", transition=True)
+
+# Share data between scenes
+scene_manager.store_persistent_data("score", 100)
+score = scene_manager.get_persistent_data("score", 0)
+```
+
+### UI System Usage
+```python
+from engine.core.ui.panel import Panel
+from engine.core.ui.button import Button
+from engine.core.ui.label import Label
+from engine.core.ui.modal import MessageBox
+
+class MenuScene(BaseScene):
+    def __init__(self):
+        super().__init__()
+        
+        # Create main panel
+        panel = Panel(20, 20, 300, 400)
+        
+        # Add title
+        title = Label(10, 10, "Main Menu")
+        panel.add_child(title)
+        
+        # Add button with click handler
+        def start_game():
+            MessageBox("Game", "Starting new game...").show()
+            
+        button = Button(10, 50, 200, 40, "Start Game")
+        button.on_click = start_game
+        panel.add_child(button)
+        
+        # Add panel to scene
+        self.add_entity(panel, "ui")
+```
+
+### Resource Management
+```python
+class GameScene(BaseScene):
+    def get_required_resources(self) -> dict:
+        return {
+            'player': 'assets/player.png',
+            'background': 'assets/background.png',
+            'music': 'assets/music.ogg'
+        }
+    
+    def on_enter(self, previous_scene):
+        super().on_enter(previous_scene)
+        # Access loaded resources
+        background = self.get_resource('background')
+        music = self.get_resource('music')
+        if music:
+            music.play(-1)  # Loop music
+```
+
+## Performance Tips
+
+1. Use entity groups for organized parallel processing
+2. Leverage the built-in multi-core processing for heavy computations
+3. Properly manage resources using the ResourceLoader
+4. Use sprite sheets for efficient rendering
+5. Implement culling for off-screen entities
+6. Utilize the scene manager's loading system for smooth transitions
+7. Take advantage of the component system for modular and reusable code
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit pull requests.
+
+## License
+
+This project is open source and available under the MIT License.
