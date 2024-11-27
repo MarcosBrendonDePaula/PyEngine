@@ -4,11 +4,12 @@ from engine.core.entity import Entity
 from engine.core.components.rectangle_renderer import RectangleRenderer
 from engine.core.components.physics import Physics
 from engine.core.components.collider import Collider
+from engine.core.components.log_component import LogComponent
 from engine.core.ui.progress_bar import ProgressBar
 import pygame
 
 class Player(Entity):
-    def __init__(self, x: float, y: float, color: tuple, controls: dict):
+    def __init__(self, x: float, y: float, color: tuple, controls: dict, player_num: int):
         super().__init__(x, y)
         # Visual representation (colored square)
         self.renderer = self.add_component(RectangleRenderer(40, 40, color))
@@ -24,6 +25,7 @@ class Player(Entity):
         self.controls = controls
         self.speed = 5.0
         self.health = 100
+        self.player_num = player_num
         
     def handle_event(self, event: pygame.event.Event):
         super().handle_event(event)
@@ -58,9 +60,14 @@ class Player(Entity):
         )
         if self.scene:
             self.scene.add_entity(hitbox, "attacks")
+            # Log attack action
+            if self.scene.logger:
+                self.scene.logger.log(f"Player {self.player_num} attacked!", "info", 2.0)
     
     def take_damage(self, amount: int):
         self.health -= amount
+        if self.scene and self.scene.logger:
+            self.scene.logger.log(f"Player {self.player_num} took {amount} damage!", "warning", 2.0)
         if self.health <= 0 and self.scene:
             self.scene.player_defeated(self)
 
@@ -93,6 +100,11 @@ class MultiplayerScene(BaseScene):
     def __init__(self):
         super().__init__()
         
+        # Create logger entity
+        logger_entity = Entity(10, 10)
+        self.logger = logger_entity.add_component(LogComponent(max_messages=5))
+        self.add_entity(logger_entity, "ui")
+        
         # Create Player 1 (Blue, WASD controls)
         self.player1 = Player(200, 300, (0, 0, 255), {
             'up': pygame.K_w,
@@ -100,7 +112,7 @@ class MultiplayerScene(BaseScene):
             'left': pygame.K_a,
             'right': pygame.K_d,
             'attack': pygame.K_SPACE
-        })
+        }, 1)
         self.add_entity(self.player1, "players")
         
         # Create Player 2 (Green, Arrow controls)
@@ -110,20 +122,23 @@ class MultiplayerScene(BaseScene):
             'left': pygame.K_LEFT,
             'right': pygame.K_RIGHT,
             'attack': pygame.K_RETURN
-        })
+        }, 2)
         self.add_entity(self.player2, "players")
         
         # Create UI for health display
         self.create_health_displays()
+        
+        # Log game start
+        self.logger.log("Game Started!", "info", 3.0)
     
     def create_health_displays(self):
         # Player 1 health bar (blue)
-        self.p1_health = ProgressBar(20, 20, 200, 20)
+        self.p1_health = ProgressBar(20, 50, 200, 20)
         self.p1_health.set_colors((0, 0, 255))  # Blue progress
         self.add_entity(self.p1_health, "ui")
         
         # Player 2 health bar (green)
-        self.p2_health = ProgressBar(580, 20, 200, 20)
+        self.p2_health = ProgressBar(580, 50, 200, 20)
         self.p2_health.set_colors((0, 255, 0))  # Green progress
         self.add_entity(self.p2_health, "ui")
     
@@ -138,6 +153,9 @@ class MultiplayerScene(BaseScene):
         
         winner = "Player 1" if player == self.player2 else "Player 2"
         MessageBox("Game Over", f"{winner} Wins!").show()
+        
+        # Log game over
+        self.logger.log(f"Game Over - {winner} Wins!", "error")
         
         # Reset after 2 seconds
         import pygame

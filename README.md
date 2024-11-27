@@ -9,6 +9,12 @@ A high-performance 2D game engine built with Python and Pygame, featuring multi-
 - **Component-based Architecture**: Flexible entity-component system for modular game object creation
 - **Scene Management**: Sophisticated scene handling with transitions and loading states
 - **Resource Management**: Smart asset loading with reference counting and automatic cleanup
+- **Logging System**: Flexible in-game logging component with support for:
+  - Multiple log levels (info, warning, error)
+  - Timed messages with auto-removal
+  - Message history with configurable size
+  - Semi-transparent overlay display
+  - Color-coded messages by level
 
 ### Physics & Collision
 - **Physics Engine**: Built-in physics system with:
@@ -180,7 +186,7 @@ if __name__ == "__main__":
     main()
 ```
 
-### Example 3: Local Multiplayer Game
+### Example 3: Local Multiplayer Game with Logging
 ```python
 from engine import create_engine
 from engine.core.scenes.base_scene import BaseScene
@@ -188,155 +194,40 @@ from engine.core.entity import Entity
 from engine.core.components.rectangle_renderer import RectangleRenderer
 from engine.core.components.physics import Physics
 from engine.core.components.collider import Collider
+from engine.core.components.log_component import LogComponent
 import pygame
 
-class Player(Entity):
-    def __init__(self, x: float, y: float, color: tuple, controls: dict):
-        super().__init__(x, y)
-        # Visual representation (colored square)
-        self.renderer = self.add_component(RectangleRenderer(40, 40, color))
-        # Physics for movement
-        self.physics = self.add_component(Physics(
-            mass=1.0,
-            friction=0.1
-        ))
-        self.physics.gravity = 0  # No gravity for top-down movement
-        # Collision detection
-        self.collider = self.add_component(Collider(40, 40))
-        # Store controls configuration
-        self.controls = controls
-        self.speed = 5.0
-        self.health = 100
-        
-    def handle_event(self, event: pygame.event.Event):
-        super().handle_event(event)
-        # Handle attacks
-        if event.type == pygame.KEYDOWN:
-            if event.key == self.controls['attack']:
-                self.attack()
-    
-    def tick(self):
-        super().tick()
-        # Handle movement
-        keys = pygame.key.get_pressed()
-        dx = dy = 0
-        
-        if keys[self.controls['left']]:
-            dx -= self.speed
-        if keys[self.controls['right']]:
-            dx += self.speed
-        if keys[self.controls['up']]:
-            dy -= self.speed
-        if keys[self.controls['down']]:
-            dy += self.speed
-            
-        self.physics.set_velocity(dx, dy)
-    
-    def attack(self):
-        # Create attack hitbox in front of player
-        hitbox = AttackHitbox(
-            self.position.x + 40, 
-            self.position.y,
-            self
-        )
-        if self.scene:
-            self.scene.add_entity(hitbox, "attacks")
-    
-    def take_damage(self, amount: int):
-        self.health -= amount
-        if self.health <= 0 and self.scene:
-            self.scene.player_defeated(self)
-
-class AttackHitbox(Entity):
-    def __init__(self, x: float, y: float, owner: Player):
-        super().__init__(x, y)
-        # Red rectangle for attack
-        self.renderer = self.add_component(RectangleRenderer(30, 30, (255, 0, 0)))
-        self.collider = self.add_component(Collider(30, 30))
-        self.owner = owner
-        self.lifetime = 10  # Frames the attack lasts
-        
-    def tick(self):
-        super().tick()
-        # Remove after lifetime
-        self.lifetime -= 1
-        if self.lifetime <= 0 and self.scene:
-            self.scene.remove_entity(self)
-        
-        # Check for hits
-        if self.scene:
-            for entity in self.scene.get_entities_by_group("players"):
-                if entity != self.owner:  # Don't hit self
-                    if self.collider.check_collision(entity.collider):
-                        entity.take_damage(10)
-                        self.scene.remove_entity(self)
-                        break
-
-class MultiplayerScene(BaseScene):
+class GameScene(BaseScene):
     def __init__(self):
         super().__init__()
         
-        # Create Player 1 (Blue, WASD controls)
-        self.player1 = Player(200, 300, (0, 0, 255), {
-            'up': pygame.K_w,
-            'down': pygame.K_s,
-            'left': pygame.K_a,
-            'right': pygame.K_d,
-            'attack': pygame.K_SPACE
-        })
-        self.add_entity(self.player1, "players")
+        # Create logger
+        logger_entity = Entity(10, 10)
+        self.logger = logger_entity.add_component(LogComponent(max_messages=5))
+        self.add_entity(logger_entity, "ui")
         
-        # Create Player 2 (Green, Arrow controls)
-        self.player2 = Player(600, 300, (0, 255, 0), {
-            'up': pygame.K_UP,
-            'down': pygame.K_DOWN,
-            'left': pygame.K_LEFT,
-            'right': pygame.K_RIGHT,
-            'attack': pygame.K_RETURN
-        })
-        self.add_entity(self.player2, "players")
+        # Log game start
+        self.logger.log("Game Started!", "info", 3.0)
         
-        # Create UI for health display
-        self.create_health_displays()
-    
-    def create_health_displays(self):
-        from engine.core.ui.label import Label
+        # Create players
+        self.player1 = self.create_player(200, 300, (0, 0, 255), 1)
+        self.player2 = self.create_player(600, 300, (0, 255, 0), 2)
         
-        # Player 1 health
-        self.p1_health = Label(20, 20, "P1: 100")
-        self.add_entity(self.p1_health, "ui")
+    def create_player(self, x, y, color, player_num):
+        player = Player(x, y, color, player_num)
+        self.add_entity(player, "players")
+        self.logger.log(f"Player {player_num} joined!", "info", 2.0)
+        return player
         
-        # Player 2 health
-        self.p2_health = Label(700, 20, "P2: 100")
-        self.add_entity(self.p2_health, "ui")
-    
-    def update(self):
-        super().update()
-        # Update health displays
-        self.p1_health.text = f"P1: {self.player1.health}"
-        self.p2_health.text = f"P2: {self.player2.health}"
-    
-    def player_defeated(self, player):
-        from engine.core.ui.modal import MessageBox
+    def on_player_hit(self, player_num, damage):
+        self.logger.log(f"Player {player_num} took {damage} damage!", "warning", 2.0)
         
-        winner = "Player 1" if player == self.player2 else "Player 2"
-        MessageBox("Game Over", f"{winner} Wins!").show()
-        
-        # Reset after 2 seconds
-        import pygame
-        pygame.time.set_timer(pygame.USEREVENT, 2000)  # 2000ms = 2s
-    
-    def handle_event(self, event):
-        super().handle_event(event)
-        # Handle reset timer
-        if event.type == pygame.USEREVENT:
-            pygame.time.set_timer(pygame.USEREVENT, 0)  # Cancel timer
-            self.__init__()  # Reset scene
+    def on_game_over(self, winner):
+        self.logger.log(f"Game Over - Player {winner} Wins!", "error")
 
-# Run the game
 def main():
-    engine = create_engine("Local Multiplayer Demo", 800, 600)
-    engine.set_scene("game", MultiplayerScene())
+    engine = create_engine("Game Demo", 800, 600)
+    engine.set_scene("game", GameScene())
     engine.run()
 
 if __name__ == "__main__":
@@ -377,6 +268,46 @@ if __name__ == "__main__":
 ```
 
 ## Advanced Features
+
+### Logging System
+```python
+# Create an entity with logging component
+logger_entity = Entity(10, 10)
+logger = logger_entity.add_component(LogComponent(max_messages=5))
+scene.add_entity(logger_entity, "ui")
+
+# Log messages with different levels and durations
+logger.log("Game Started!", "info", 3.0)  # Shows for 3 seconds
+logger.log("Player took damage!", "warning")  # Permanent message
+logger.log("Game Over!", "error")  # Permanent error message
+
+# Clear all messages
+logger.clear()
+
+# Get current messages
+messages = logger.get_messages()
+
+# Customize logger appearance
+logger.line_height = 20  # Adjust line spacing
+logger.padding = 10      # Adjust padding
+logger.background_alpha = 160  # Adjust background transparency
+logger.colors["info"] = (0, 255, 0)  # Custom color for info messages
+```
+
+Features:
+- **Multiple Log Levels**: 
+  - Info: White text for general information
+  - Warning: Yellow text for important notices
+  - Error: Red text for critical issues
+- **Timed Messages**: Messages can automatically disappear after a specified duration
+- **Message History**: Maintains a configurable number of recent messages
+- **Visual Customization**:
+  - Adjustable font size and line height
+  - Customizable colors per log level
+  - Configurable background transparency
+  - Adjustable padding and layout
+- **Scene Integration**: Works seamlessly with the entity-component system
+- **Performance Optimized**: Automatically removes expired messages
 
 ### UI System Integration
 ```python
