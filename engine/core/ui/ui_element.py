@@ -18,6 +18,12 @@ class UIElement:
         self.border_width = 0
         self.padding = 5
         
+        # Entity-like properties for scene compatibility
+        self.active = True
+        self.scene = None
+        self.components = {}
+        self.id = id(self)  # Use Python's built-in id() for consistency with Entity
+        
     def get_absolute_position(self) -> Tuple[int, int]:
         """Get position considering parent positions"""
         x, y = self.x, self.y
@@ -100,3 +106,13 @@ class UIElement:
         self.border_color = border_color
         self.border_width = border_width
         self.padding = padding
+        
+    def tick(self):
+        """Update method for scene compatibility"""
+        if not self.active:
+            return
+            
+        # Update components if any
+        for component in self.components.values():
+            if component.enabled:
+                component.tick()

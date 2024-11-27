@@ -15,10 +15,6 @@ class ProgressBar(UIElement):
         self.border_color = (100, 100, 100)   # Gray
         self.border_width = 1
         
-        # Entity-like properties for scene compatibility
-        self.active = True
-        self.scene = None
-        
     @property
     def progress(self) -> float:
         return self._progress
@@ -64,19 +60,3 @@ class ProgressBar(UIElement):
         # Render children
         for child in self.children:
             child.render(screen, offset)
-            
-    def tick(self):
-        """Update method for scene compatibility"""
-        pass
-        
-    def handle_event(self, event: pygame.event.Event):
-        """Handle events for both UI and scene compatibility"""
-        if not self.enabled or not self.visible:
-            return False
-            
-        # Handle children events first (in reverse order for proper z-order)
-        for child in reversed(self.children):
-            if child.handle_event(event):
-                return True
-                
-        return False

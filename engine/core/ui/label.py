@@ -20,11 +20,6 @@ class Label(UIElement):
         
         super().__init__(x, y, width, height)
         
-        # Entity-like properties for scene compatibility
-        self.active = True
-        self.scene = None
-        self.components = {}
-        
     def set_text(self, text: str):
         """Update the label's text"""
         self.text = text
@@ -78,25 +73,3 @@ class Label(UIElement):
         # Render children
         for child in self.children:
             child.render(screen, offset)
-            
-    def tick(self):
-        """Update method for scene compatibility"""
-        if not self.active:
-            return
-            
-        # Update components if any
-        for component in self.components.values():
-            if component.enabled:
-                component.tick()
-                
-    def handle_event(self, event: pygame.event.Event):
-        """Handle events for both UI and scene compatibility"""
-        if not self.enabled or not self.visible:
-            return False
-            
-        # Handle children events first (in reverse order for proper z-order)
-        for child in reversed(self.children):
-            if child.handle_event(event):
-                return True
-                
-        return False
