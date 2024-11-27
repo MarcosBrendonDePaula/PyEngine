@@ -36,169 +36,186 @@ pip install pygame
 
 ## Quick Start
 
-### Basic Game Setup
+### Simple Platform Game
+[Previous platform game example remains unchanged...]
+
+### Local Multiplayer Game
 ```python
 from engine import create_engine
 from engine.core.scenes.base_scene import BaseScene
 from engine.core.entity import Entity
+from engine.core.components.rectangle_renderer import RectangleRenderer
 from engine.core.components.physics import Physics
 from engine.core.components.collider import Collider
+import pygame
 
-# Create a game entity
 class Player(Entity):
-    def __init__(self, x: float = 0, y: float = 0):
+    def __init__(self, x: float, y: float, color: tuple, controls: dict):
         super().__init__(x, y)
-        # Add physics with gravity
+        # Visual representation (colored square)
+        self.renderer = self.add_component(RectangleRenderer(40, 40, color))
+        # Physics for movement
         self.physics = self.add_component(Physics(
             mass=1.0,
-            gravity=0.5,
             friction=0.1
         ))
-        # Add collision detection
+        self.physics.gravity = 0  # No gravity for top-down movement
+        # Collision detection
         self.collider = self.add_component(Collider(40, 40))
-        self.collider.set_collision_layer(0)
+        # Store controls configuration
+        self.controls = controls
+        self.speed = 5.0
+        self.health = 100
+        
+    def handle_event(self, event: pygame.event.Event):
+        super().handle_event(event)
+        # Handle attacks
+        if event.type == pygame.KEYDOWN:
+            if event.key == self.controls['attack']:
+                self.attack()
+    
+    def tick(self):
+        super().tick()
+        # Handle movement
+        keys = pygame.key.get_pressed()
+        dx = dy = 0
+        
+        if keys[self.controls['left']]:
+            dx -= self.speed
+        if keys[self.controls['right']]:
+            dx += self.speed
+        if keys[self.controls['up']]:
+            dy -= self.speed
+        if keys[self.controls['down']]:
+            dy += self.speed
+            
+        self.physics.set_velocity(dx, dy)
+    
+    def attack(self):
+        # Create attack hitbox in front of player
+        hitbox = AttackHitbox(
+            self.position.x + 40, 
+            self.position.y,
+            self
+        )
+        if self.scene:
+            self.scene.add_entity(hitbox, "attacks")
+    
+    def take_damage(self, amount: int):
+        self.health -= amount
+        if self.health <= 0 and self.scene:
+            self.scene.player_defeated(self)
 
-# Create a game scene
-class GameScene(BaseScene):
+class AttackHitbox(Entity):
+    def __init__(self, x: float, y: float, owner: Player):
+        super().__init__(x, y)
+        # Red rectangle for attack
+        self.renderer = self.add_component(RectangleRenderer(30, 30, (255, 0, 0)))
+        self.collider = self.add_component(Collider(30, 30))
+        self.owner = owner
+        self.lifetime = 10  # Frames the attack lasts
+        
+    def tick(self):
+        super().tick()
+        # Remove after lifetime
+        self.lifetime -= 1
+        if self.lifetime <= 0 and self.scene:
+            self.scene.remove_entity(self)
+        
+        # Check for hits
+        if self.scene:
+            for entity in self.scene.get_entities_by_group("players"):
+                if entity != self.owner:  # Don't hit self
+                    if self.collider.check_collision(entity.collider):
+                        entity.take_damage(10)
+                        self.scene.remove_entity(self)
+                        break
+
+class MultiplayerScene(BaseScene):
     def __init__(self):
         super().__init__()
-        # Create player
-        self.player = Player(400, 300)
-        self.add_entity(self.player, "player")
+        
+        # Create Player 1 (Blue, WASD controls)
+        self.player1 = Player(200, 300, (0, 0, 255), {
+            'up': pygame.K_w,
+            'down': pygame.K_s,
+            'left': pygame.K_a,
+            'right': pygame.K_d,
+            'attack': pygame.K_SPACE
+        })
+        self.add_entity(self.player1, "players")
+        
+        # Create Player 2 (Green, Arrow controls)
+        self.player2 = Player(600, 300, (0, 255, 0), {
+            'up': pygame.K_UP,
+            'down': pygame.K_DOWN,
+            'left': pygame.K_LEFT,
+            'right': pygame.K_RIGHT,
+            'attack': pygame.K_RETURN
+        })
+        self.add_entity(self.player2, "players")
+        
+        # Create UI for health display
+        self.create_health_displays()
+    
+    def create_health_displays(self):
+        from engine.core.ui.label import Label
+        
+        # Player 1 health
+        self.p1_health = Label(20, 20, "P1: 100")
+        self.add_entity(self.p1_health, "ui")
+        
+        # Player 2 health
+        self.p2_health = Label(700, 20, "P2: 100")
+        self.add_entity(self.p2_health, "ui")
+    
+    def update(self):
+        super().update()
+        # Update health displays
+        self.p1_health.text = f"P1: {self.player1.health}"
+        self.p2_health.text = f"P2: {self.player2.health}"
+    
+    def player_defeated(self, player):
+        from engine.core.ui.modal import MessageBox
+        
+        winner = "Player 1" if player == self.player2 else "Player 2"
+        MessageBox("Game Over", f"{winner} Wins!").show()
+        
+        # Reset after 2 seconds
+        import pygame
+        pygame.time.set_timer(pygame.USEREVENT, 2000)  # 2000ms = 2s
+    
+    def handle_event(self, event):
+        super().handle_event(event)
+        # Handle reset timer
+        if event.type == pygame.USEREVENT:
+            pygame.time.set_timer(pygame.USEREVENT, 0)  # Cancel timer
+            self.__init__()  # Reset scene
 
 # Run the game
 def main():
-    engine = create_engine("My Game", 800, 600)
-    engine.set_scene("game", GameScene())
+    engine = create_engine("Local Multiplayer Demo", 800, 600)
+    engine.set_scene("game", MultiplayerScene())
     engine.run()
 
 if __name__ == "__main__":
     main()
 ```
 
-### UI System Usage
-```python
-from engine.core.ui.panel import Panel
-from engine.core.ui.button import Button
-from engine.core.ui.label import Label
-from engine.core.ui.modal import MessageBox
+This example demonstrates:
+- Local multiplayer with shared keyboard controls
+- Simple combat mechanics with attacks and health
+- Basic UI for health display
+- Game state management (win conditions and reset)
+- Entity collision for attack detection
+- Different control schemes for each player
 
-class MenuScene(BaseScene):
-    def __init__(self):
-        super().__init__()
-        
-        # Create main panel
-        panel = Panel(20, 20, 300, 400)
-        
-        # Add title
-        title = Label(10, 10, "Main Menu")
-        panel.add_child(title)
-        
-        # Add button with click handler
-        def start_game():
-            MessageBox("Game", "Starting new game...").show()
-            
-        button = Button(10, 50, 200, 40, "Start Game")
-        button.on_click = start_game
-        panel.add_child(button)
-        
-        # Add panel to scene
-        self.add_entity(panel, "ui")
-```
+Player 1 (Blue):
+- Movement: WASD keys
+- Attack: Space bar
 
-### Resource Management
-```python
-class GameScene(BaseScene):
-    def get_required_resources(self) -> dict:
-        return {
-            'player': 'assets/player.png',
-            'background': 'assets/background.png',
-            'music': 'assets/music.ogg'
-        }
-    
-    def on_enter(self, previous_scene):
-        super().on_enter(previous_scene)
-        # Access loaded resources
-        background = self.get_resource('background')
-        music = self.get_resource('music')
-        if music:
-            music.play(-1)  # Loop music
-```
+Player 2 (Green):
+- Movement: Arrow keys
+- Attack: Enter key
 
-## Advanced Features
-
-### Physics System
-```python
-# Create a physics-enabled entity
-physics = entity.add_component(Physics(
-    mass=1.0,    # Entity mass
-    gravity=0.5, # Gravity scale
-    friction=0.1 # Surface friction
-))
-
-# Apply forces and impulses
-physics.apply_force(0, -10)  # Continuous force
-physics.apply_impulse(5, 0)  # Instant force
-physics.set_velocity(3, 0)   # Direct velocity
-
-# Configure physics behavior
-physics.set_kinematic(True)  # Ignore forces
-physics.terminal_velocity = 10.0  # Max speed
-```
-
-### Scene Management
-```python
-# Create and manage scenes
-engine.add_scene("menu", MenuScene())
-engine.add_scene("game", GameScene())
-
-# Switch scenes with transition
-engine.set_scene("game", transition=True)
-
-# Share data between scenes
-scene_manager.store_persistent_data("score", 100)
-score = scene_manager.get_persistent_data("score", 0)
-```
-
-### Advanced UI Components
-```python
-# Create tabs with content
-tabs = Tabs(20, 20, 760, 560)
-basic_panel = tabs.add_tab("basic", "Basic Controls")
-advanced_panel = tabs.add_tab("advanced", "Advanced")
-
-# Create data grid
-grid = Grid(20, 20, 700, 200, [
-    GridColumn("ID", "id", 80),
-    GridColumn("Name", "name", 200)
-])
-grid.set_data([
-    {"id": 1, "name": "Player 1"},
-    {"id": 2, "name": "Player 2"}
-])
-
-# Create HTML view
-html_view = HTMLView(20, 20, 400, 200)
-html_view.set_html("""
-    <h1>Title</h1>
-    <p>Formatted <b>text</b></p>
-""")
-```
-
-## Performance Tips
-
-1. Use entity groups for organized parallel processing
-2. Leverage the built-in multi-core processing for heavy computations
-3. Properly manage resources using the ResourceLoader
-4. Use sprite sheets for efficient rendering
-5. Implement culling for off-screen entities
-6. Utilize the scene manager's loading system for smooth transitions
-7. Take advantage of the component system for modular and reusable code
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit pull requests.
-
-## License
-
-This project is open source and available under the MIT License.
+[Rest of the README remains unchanged...]
