@@ -124,12 +124,14 @@ class Player(Entity):
         super().__init__(x, y)
         # Red square for player
         self.renderer = self.add_component(RectangleRenderer(40, 40, (255, 0, 0)))
-        # Add physics with gravity
-        self.physics = self.add_component(Physics(
+        # Add physics with gravity and improved settings
+        physics = self.add_component(Physics(
             mass=1.0,
             gravity=0.5,
-            friction=0.1
+            friction=0.3  # Increased friction for better control
         ))
+        physics.restitution = 0.0  # No bounce for better platforming feel
+        self.physics = physics
         # Add collision
         self.collider = self.add_component(Collider(40, 40))
         self.collider.set_collision_layer(0)  # Player layer
@@ -195,9 +197,53 @@ from engine.core.components.rectangle_renderer import RectangleRenderer
 from engine.core.components.physics import Physics
 from engine.core.components.collider import Collider
 from engine.core.components.log_component import LogComponent
+from engine.core.ui.progress_bar import ProgressBar
 import pygame
 
-class GameScene(BaseScene):
+class Player(Entity):
+    def __init__(self, x: float, y: float, color: tuple, controls: dict, player_num: int):
+        super().__init__(x, y)
+        # Visual representation (colored square)
+        self.renderer = self.add_component(RectangleRenderer(40, 40, color))
+        # Physics for movement with collision response
+        self.physics = self.add_component(Physics(mass=1.0, gravity=0, friction=0.8))
+        self.physics.restitution = 0.5  # Add bounce to collisions
+        # Collision detection
+        self.collider = self.add_component(Collider(40, 40))
+        # Store controls configuration
+        self.controls = controls
+        self.speed = 8.0
+        self.health = 100
+        self.player_num = player_num
+        self.knockback_force = 5.0
+        
+    def tick(self):
+        super().tick()
+        # Handle movement
+        keys = pygame.key.get_pressed()
+        dx = dy = 0
+        
+        if keys[self.controls['left']]: dx -= self.speed
+        if keys[self.controls['right']]: dx += self.speed
+        if keys[self.controls['up']]: dy -= self.speed
+        if keys[self.controls['down']]: dy += self.speed
+            
+        # Normalize diagonal movement
+        if dx != 0 and dy != 0:
+            factor = self.speed / (2 ** 0.5)
+            dx *= factor / self.speed
+            dy *= factor / self.speed
+            
+        self.physics.set_velocity(dx, dy)
+    
+    def attack(self):
+        hitbox = AttackHitbox(self.position.x + 40, self.position.y, self)
+        if self.scene:
+            self.scene.add_entity(hitbox, "attacks")
+            if self.scene.logger:
+                self.scene.logger.log(f"Player {self.player_num} attacked!", "info", 2.0)
+
+class MultiplayerScene(BaseScene):
     def __init__(self):
         super().__init__()
         
@@ -206,28 +252,44 @@ class GameScene(BaseScene):
         self.logger = logger_entity.add_component(LogComponent(max_messages=5))
         self.add_entity(logger_entity, "ui")
         
-        # Log game start
+        # Create Player 1 (Blue, WASD controls)
+        self.player1 = Player(200, 300, (0, 0, 255), {
+            'up': pygame.K_w,
+            'down': pygame.K_s,
+            'left': pygame.K_a,
+            'right': pygame.K_d,
+            'attack': pygame.K_SPACE
+        }, 1)
+        self.add_entity(self.player1, "players")
+        
+        # Create Player 2 (Green, Arrow controls)
+        self.player2 = Player(600, 300, (0, 255, 0), {
+            'up': pygame.K_UP,
+            'down': pygame.K_DOWN,
+            'left': pygame.K_LEFT,
+            'right': pygame.K_RIGHT,
+            'attack': pygame.K_RETURN
+        }, 2)
+        self.add_entity(self.player2, "players")
+        
+        # Create health bars
+        self.create_health_displays()
         self.logger.log("Game Started!", "info", 3.0)
+    
+    def create_health_displays(self):
+        # Player 1 health bar (blue)
+        self.p1_health = ProgressBar(20, 50, 200, 20)
+        self.p1_health.set_colors((0, 0, 255))
+        self.add_entity(self.p1_health, "ui")
         
-        # Create players
-        self.player1 = self.create_player(200, 300, (0, 0, 255), 1)
-        self.player2 = self.create_player(600, 300, (0, 255, 0), 2)
-        
-    def create_player(self, x, y, color, player_num):
-        player = Player(x, y, color, player_num)
-        self.add_entity(player, "players")
-        self.logger.log(f"Player {player_num} joined!", "info", 2.0)
-        return player
-        
-    def on_player_hit(self, player_num, damage):
-        self.logger.log(f"Player {player_num} took {damage} damage!", "warning", 2.0)
-        
-    def on_game_over(self, winner):
-        self.logger.log(f"Game Over - Player {winner} Wins!", "error")
+        # Player 2 health bar (green)
+        self.p2_health = ProgressBar(580, 50, 200, 20)
+        self.p2_health.set_colors((0, 255, 0))
+        self.add_entity(self.p2_health, "ui")
 
 def main():
-    engine = create_engine("Game Demo", 800, 600)
-    engine.set_scene("game", GameScene())
+    engine = create_engine("Local Multiplayer Demo", 800, 600)
+    engine.set_scene("game", MultiplayerScene())
     engine.run()
 
 if __name__ == "__main__":
@@ -292,40 +354,6 @@ logger.line_height = 20  # Adjust line spacing
 logger.padding = 10      # Adjust padding
 logger.background_alpha = 160  # Adjust background transparency
 logger.colors["info"] = (0, 255, 0)  # Custom color for info messages
-```
-
-Features:
-- **Multiple Log Levels**: 
-  - Info: White text for general information
-  - Warning: Yellow text for important notices
-  - Error: Red text for critical issues
-- **Timed Messages**: Messages can automatically disappear after a specified duration
-- **Message History**: Maintains a configurable number of recent messages
-- **Visual Customization**:
-  - Adjustable font size and line height
-  - Customizable colors per log level
-  - Configurable background transparency
-  - Adjustable padding and layout
-- **Scene Integration**: Works seamlessly with the entity-component system
-- **Performance Optimized**: Automatically removes expired messages
-
-### UI System Integration
-```python
-# Create a UI element with physics
-label = Label(100, 100, "Physics Label")
-physics = label.add_component(Physics(mass=1.0))
-
-# Add custom components to UI elements
-class CustomBehavior(Component):
-    def tick(self):
-        # Custom update logic
-        pass
-
-label.add_component(CustomBehavior())
-
-# UI elements in the scene system
-scene.add_entity(label, "ui")  # Add to UI group
-scene.add_entity(label, "physics")  # Add to physics group too
 ```
 
 ### Scene Management

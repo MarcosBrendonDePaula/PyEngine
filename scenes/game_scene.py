@@ -154,7 +154,9 @@ class Player(Entity):
         # Add components - for now just use a red square
         self.renderer = self.add_component(RectangleRenderer(40, 40, (255, 0, 0)))  # Red square
         self.collider = self.add_component(Collider(40, 40))
-        self.physics = self.add_component(Physics(mass=1.0, gravity=0.5, friction=0.1))
+        physics = self.add_component(Physics(mass=1.0, gravity=0.5, friction=0.3))  # Increased friction
+        physics.restitution = 0.0  # No bounce for better platforming feel
+        self.physics = physics
         self.controller = self.add_component(KeyboardController(speed=5.0))
 
         # Set up collision response

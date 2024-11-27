@@ -56,33 +56,23 @@ class Physics(Component):
         overlap_x = min(rect1.right, rect2.right) - max(rect1.left, rect2.left)
         overlap_y = min(rect1.bottom, rect2.bottom) - max(rect1.top, rect2.top)
 
-        # Get the centers of both rectangles
-        center1 = pygame.math.Vector2(rect1.centerx, rect1.centery)
-        center2 = pygame.math.Vector2(rect2.centerx, rect2.centery)
-
-        # Calculate direction from center1 to center2
-        direction = center2 - center1
-        if direction.length() > 0:
-            direction.normalize_ip()
-
-        # Determine the separation distance needed
-        separation = max(overlap_x, overlap_y) * 1.1  # Add 10% extra separation
-
-        # Move this entity away from the collision
-        self.entity.position.x -= direction.x * separation
-        self.entity.position.y -= direction.y * separation
-
-        # Calculate reflection vector for velocity
+        # Determine which overlap is smaller to resolve along that axis
         if abs(overlap_x) < abs(overlap_y):
             # Horizontal collision
+            if rect1.centerx < rect2.centerx:
+                self.entity.position.x -= overlap_x
+            else:
+                self.entity.position.x += overlap_x
             self.velocity.x = -self.velocity.x * self.restitution
-            # Apply additional horizontal separation force
-            self.apply_impulse(-direction.x * 10.0, 0)
         else:
             # Vertical collision
+            if rect1.centery < rect2.centery:
+                self.entity.position.y -= overlap_y
+                if self.velocity.y > 0:  # Only set grounded if moving downward
+                    self.is_grounded = True
+            else:
+                self.entity.position.y += overlap_y
             self.velocity.y = -self.velocity.y * self.restitution
-            # Apply additional vertical separation force
-            self.apply_impulse(0, -direction.y * 10.0)
 
     def tick(self):
         if not self.enabled or not self.entity:
@@ -108,9 +98,6 @@ class Physics(Component):
             velocity_magnitude = self.velocity.length()
             if velocity_magnitude > self.terminal_velocity:
                 self.velocity.scale_to_length(self.terminal_velocity)
-
-            # Store previous position for collision resolution
-            prev_pos = pygame.math.Vector2(self.entity.position)
 
             # Update position
             self.entity.position.x += self.velocity.x

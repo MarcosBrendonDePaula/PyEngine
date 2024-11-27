@@ -23,7 +23,7 @@ def main():
     
     # Create the menu scene
     print("Creating menu scene")
-    menu_scene = UIDemoScene()
+    menu_scene = MenuScene()
     
     # Add and set the scene (this will also set up the interface)
     print("Adding menu scene to engine")
