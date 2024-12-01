@@ -1,41 +1,57 @@
 # PyEngine
 
-A high-performance 2D game engine built with Python and Pygame, featuring multi-core processing, advanced lighting, physics simulation, and a comprehensive UI system.
+A high-performance 2D game engine built with Python and Pygame, featuring multi-core processing, advanced lighting, physics simulation, sprite animation, and a comprehensive UI system.
 
-## Core Features
+## Features
 
-### Multi-Core Processing
+### Core Systems
+
+#### Multi-Core Processing
 - Automatic CPU core detection and utilization
 - Parallel entity processing for improved performance
 - Configurable thread count (defaults to 75% of available cores)
 - Efficient workload distribution
 
-### Scene Management
+#### Scene Management
 - Scene-based game organization
 - Smooth scene transitions
 - Resource loading management
 - Persistent data between scenes
 
-### Entity-Component System
+#### Entity-Component System
 - Flexible component-based architecture
 - Hot-swappable components
 - Entity grouping and layering
 - Component dependency management
 
-## Physics & Collision System
+### Animation System
 
-### Physics Engine
+#### Sprite Animation
+- Lane-based sprite sheet animation
+- Support for variable frame sizes
+- Multiple animations per row support
+- Custom lane width limits
+- Animation state management:
+  - Continuous animation states
+  - Animation queuing
+  - Frame callbacks
+  - Direction-aware sprite flipping
+  - Animation speed control
+
+### Physics System
+
+#### Physics Engine
 - Gravity and mass simulation
 - Force and impulse application
 - Friction and restitution
 - Velocity and acceleration handling
 - Kinematic body support
 
-### Advanced Collision Detection
+#### Collision Detection
 Multiple collider types with debug visualization:
 - Rectangle Colliders
 - Circle Colliders
-- Polygon Colliders
+- Polygon Colliders:
   - Triangle
   - Hexagon
   - Star
@@ -45,9 +61,9 @@ Multiple collider types with debug visualization:
 - Rotation support for polygon colliders
 - Collision response and knockback
 
-## Lighting System
+### Lighting System
 
-### Light Components
+#### Light Components
 - Dynamic light sources
 - Color and intensity control
 - Customizable light radius
@@ -56,7 +72,7 @@ Multiple collider types with debug visualization:
   - Directional lights
   - Area lights
 
-### Advanced Features
+#### Advanced Features
 - Ray tracing for realistic light behavior
 - Shadow casting
 - Light color blending
@@ -64,9 +80,9 @@ Multiple collider types with debug visualization:
 - Real-time light updates
 - Warm/cool light temperature
 
-## User Interface System
+### UI System
 
-### Basic Controls
+#### Basic Controls
 - Labels: Text display with customizable fonts
 - Buttons: Interactive clickable elements
 - ProgressBar: Visual progress indication
@@ -75,14 +91,14 @@ Multiple collider types with debug visualization:
 - Input: Text input fields
 - MultilineInput: Multi-line text editing
 
-### Layout Components
+#### Layout Components
 - Panel: Basic container with styling
 - TitledPanel: Panel with header text
 - Grid: Grid-based layout system
 - ScrollView: Scrollable content container
 - Tabs: Tabbed interface organization
 
-### Advanced UI Features
+#### Advanced UI Features
 - HTMLView: Basic HTML rendering
 - Tooltip: Hover information display
 - Modal: Popup dialog system
@@ -92,106 +108,108 @@ Multiple collider types with debug visualization:
 - Select: Dropdown selection
 - InputSelect: Searchable dropdown
 
-### UI Architecture
+#### UI Architecture
 - Hierarchical component system
 - Event propagation
 - Automatic layout management
 - Style inheritance
 - Component state management
 
-## Game Examples
+## Usage Examples
 
-### 1. Local Multiplayer Combat Game
+### 1. Character Animation
 ```python
 from engine import create_engine
 from engine.core.scenes.base_scene import BaseScene
 from engine.core.entity import Entity
-from engine.core.components.physics import Physics
-from engine.core.components.collider import Collider
-from engine.core.components.log_component import LogComponent
-from engine.core.components.ui.progress_bar import ProgressBar
+from engine.core.components.sprite_animation import SpriteAnimation
 
-class Player(Entity):
-    def __init__(self, x: float, y: float, color: tuple, controls: dict, player_num: int):
+class Character(Entity):
+    def __init__(self, x: float, y: float):
         super().__init__(x, y)
-        # Add physics for movement
-        self.physics = self.add_component(Physics(mass=1.0, gravity=0, friction=0.8))
-        self.physics.restitution = 0.5  # Add bounce
+        self.sprite_animation = self.add_component(SpriteAnimation())
         
-        # Add collision
-        self.collider = self.add_component(Collider(40, 40))
+        # Load sprite sheet
+        self.sprite_animation.load_sprite_sheet("assets/character.png")
         
-        # Setup player properties
-        self.controls = controls
-        self.speed = 8.0
-        self.health = 100
-        self.player_num = player_num
+        # Add idle animation (5 frames, 100x160)
+        self.sprite_animation.create_animation_from_lane(
+            name="idle",
+            start_x=0,          # Start X position
+            start_y=0,          # First row
+            frame_width=100,    # Frame width
+            frame_height=160,   # Frame height
+            frame_count=5,      # Number of frames
+            frame_duration=0.2, # Duration per frame
+            loop=True          # Loop animation
+        )
         
-    def tick(self):
-        super().tick()
-        # Handle movement based on controls
+        # Add walk animation (5 frames, 100x160)
+        self.sprite_animation.create_animation_from_lane(
+            name="walk",
+            start_x=0,         # Start X position
+            start_y=160,       # Second row
+            frame_width=100,   # Frame width
+            frame_height=160,  # Frame height
+            frame_count=5,     # Number of frames
+            frame_duration=0.15,
+            loop=True
+        )
+        
+        # Add jump animation (3 frames, 150x500)
+        self.sprite_animation.create_animation_from_lane(
+            name="jump",
+            start_x=0,         # Start X position
+            start_y=320,       # Third row
+            frame_width=150,   # Frame width
+            frame_height=500,  # Frame height
+            frame_count=3,     # Number of frames
+            frame_duration=0.1,
+            loop=False
+        )
+        
+        # Start with idle animation
+        self.sprite_animation.play("idle")
+    
+    def handle_input(self):
         keys = pygame.key.get_pressed()
-        dx = dy = 0
         
-        if keys[self.controls['left']]: dx -= self.speed
-        if keys[self.controls['right']]: dx += self.speed
-        if keys[self.controls['up']]: dy -= self.speed
-        if keys[self.controls['down']]: dy += self.speed
-            
-        self.physics.set_velocity(dx, dy)
+        if keys[pygame.K_LEFT]:
+            self.sprite_animation.set_flip(False, False)  # Face left
+            self.sprite_animation.play("walk")
+            self.position.x -= 2
+        elif keys[pygame.K_RIGHT]:
+            self.sprite_animation.set_flip(True, False)   # Face right
+            self.sprite_animation.play("walk")
+            self.position.x += 2
+        else:
+            self.sprite_animation.play("idle")
 
-class MultiplayerScene(BaseScene):
+class AnimationScene(BaseScene):
     def __init__(self):
         super().__init__()
-        
-        # Add logging system
-        logger_entity = Entity(10, 10)
-        self.logger = logger_entity.add_component(LogComponent(max_messages=5))
-        self.add_entity(logger_entity, "ui")
-        
-        # Create Player 1 (Blue, WASD controls)
-        self.player1 = Player(200, 300, (0, 0, 255), {
-            'up': pygame.K_w,
-            'down': pygame.K_s,
-            'left': pygame.K_a,
-            'right': pygame.K_d,
-            'attack': pygame.K_SPACE
-        }, 1)
-        self.add_entity(self.player1, "players")
-        
-        # Create Player 2 (Green, Arrow controls)
-        self.player2 = Player(600, 300, (0, 255, 0), {
-            'up': pygame.K_UP,
-            'down': pygame.K_DOWN,
-            'left': pygame.K_LEFT,
-            'right': pygame.K_RIGHT,
-            'attack': pygame.K_RETURN
-        }, 2)
-        self.add_entity(self.player2, "players")
-        
-        # Create health bars
-        self._create_health_bars()
-        self.logger.log("Game Started!", "info", 3.0)
+        self.character = Character(400, 300)
+        self.add_entity(self.character)
+    
+    def update(self):
+        super().update()
+        self.character.handle_input()
 
 def main():
-    engine = create_engine("Local Multiplayer Demo", 800, 600)
-    engine.set_scene("game", MultiplayerScene())
+    engine = create_engine("Animation Demo", 800, 600)
+    engine.set_scene("game", AnimationScene())
     engine.run()
 ```
 
-### 2. Platformer with Dynamic Lighting
+### 2. Physics and Collision
 ```python
-from engine import create_engine
-from engine.core.scenes.base_scene import BaseScene
-from engine.core.entity import Entity
 from engine.core.components.physics import Physics
-from engine.core.components.collider import RectCollider
-from engine.core.components.light_component import LightComponent
+from engine.core.components.collider import Collider
 
 class Player(Entity):
     def __init__(self, x: float, y: float):
         super().__init__(x, y)
-        # Physics with gravity
+        # Add physics with gravity
         self.physics = self.add_component(Physics(
             mass=1.0,
             gravity=0.5,
@@ -199,126 +217,66 @@ class Player(Entity):
         ))
         self.physics.restitution = 0.0  # No bounce
         
-        # Collision
-        self.collider = self.add_component(RectCollider(40, 40))
-        
-        # Player light
-        self.light = self.add_component(LightComponent(
-            color=(255, 220, 150),  # Warm light
-            intensity=1.2,
-            radius=200
-        ))
-    
-    def jump(self):
-        if self.physics.is_grounded:
-            self.physics.apply_impulse(0, -12.0)
-
-class Platform(Entity):
-    def __init__(self, x: float, y: float, width: float, height: float):
-        super().__init__(x, y)
-        # Static physics
-        self.physics = self.add_component(Physics())
-        self.physics.set_kinematic(True)
-        
-        # Collision
-        self.collider = self.add_component(RectCollider(width, height))
-
-class PlatformerScene(BaseScene):
-    def __init__(self):
-        super().__init__()
-        # Create player
-        self.player = Player(400, 300)
-        self.add_entity(self.player, "player")
-        
-        # Create platforms
-        self._create_platforms()
-        
-        # Add ambient light
-        ambient = Entity(400, 300)
-        ambient.add_component(LightComponent(
-            color=(100, 100, 150),
-            intensity=0.5,
-            radius=800
-        ))
-        self.add_entity(ambient, "lights")
-    
-    def _create_platforms(self):
-        # Ground
-        self.add_entity(Platform(400, 550, 800, 40), "platforms")
-        # Floating platforms
-        self.add_entity(Platform(200, 400, 200, 20), "platforms")
-        self.add_entity(Platform(600, 300, 200, 20), "platforms")
-        self.add_entity(Platform(400, 200, 200, 20), "platforms")
-
-def main():
-    engine = create_engine("Platformer Demo", 800, 600)
-    engine.set_scene("game", PlatformerScene())
-    engine.run()
+        # Add collision
+        self.collider = self.add_component(Collider(40, 40))
 ```
 
-### 3. Puzzle Game with Advanced Colliders
+### 3. Dynamic Lighting
 ```python
-from engine import create_engine
-from engine.core.scenes.base_scene import BaseScene
-from engine.core.entity import Entity
-from engine.core.components.collider import CircleCollider, PolygonCollider
-from engine.core.components.physics import Physics
+from engine.core.components.light_component import LightComponent
 
-class PuzzlePiece(Entity):
-    def __init__(self, x: float, y: float, shape_type: str, size: float):
+class Torch(Entity):
+    def __init__(self, x: float, y: float):
         super().__init__(x, y)
-        # Add physics
-        self.physics = self.add_component(Physics(
-            mass=1.0,
-            gravity=0,
-            friction=0.8
+        # Add flickering light
+        self.light = self.add_component(LightComponent(
+            color=(255, 200, 100),  # Warm color
+            intensity=1.2,
+            radius=150
         ))
-        
-        # Add shape-specific collider
-        if shape_type == "circle":
-            self.collider = self.add_component(CircleCollider(size))
-        elif shape_type == "triangle":
-            points = [
-                (-size/2, size/2),  # Bottom left
-                (size/2, size/2),   # Bottom right
-                (0, -size/2)        # Top
-            ]
-            self.collider = self.add_component(PolygonCollider(points))
-        elif shape_type == "star":
-            points = self._create_star_points(size)
-            self.collider = self.add_component(PolygonCollider(points))
-    
-    def _create_star_points(self, size):
-        points = []
-        for i in range(10):
-            angle = math.pi * i / 5 - math.pi/2
-            radius = size/2 if i % 2 == 0 else size/4
-            px = math.cos(angle) * radius
-            py = math.sin(angle) * radius
-            points.append((px, py))
-        return points
+```
 
-class PuzzleScene(BaseScene):
+### 4. User Interface
+```python
+from engine.core.components.ui.panel import Panel
+from engine.core.components.ui.button import Button
+from engine.core.components.ui.label import Label
+
+class MenuScene(BaseScene):
     def __init__(self):
         super().__init__()
-        # Create puzzle pieces
-        self._create_puzzle_pieces()
-        
-        # Create target zones
-        self._create_target_zones()
-    
-    def _create_puzzle_pieces(self):
-        # Circle piece
-        self.add_entity(PuzzlePiece(200, 300, "circle", 40), "pieces")
-        # Triangle piece
-        self.add_entity(PuzzlePiece(400, 300, "triangle", 50), "pieces")
-        # Star piece
-        self.add_entity(PuzzlePiece(600, 300, "star", 60), "pieces")
+        # Create menu panel
+        menu = Panel(200, 100, 400, 300)
+        menu.add_child(Label(10, 10, "Main Menu"))
+        menu.add_child(Button(10, 50, "Start Game", self.start_game))
+        menu.add_child(Button(10, 100, "Options", self.show_options))
+        self.add_ui_element(menu)
+```
 
-def main():
-    engine = create_engine("Puzzle Demo", 800, 600)
-    engine.set_scene("game", PuzzleScene())
-    engine.run()
+## Project Structure
+
+```
+PyEngine/
+├── engine/
+│   ├── core/
+│   │   ├── components/
+│   │   │   ├── physics.py
+│   │   │   ├── collider.py
+│   │   │   ├── light_component.py
+│   │   │   ├── sprite_animation.py
+│   │   │   └── ui/
+│   │   ├── scenes/
+│   │   ├── entity.py
+│   │   └── input.py
+│   └── __init__.py
+├── tests/
+│   ├── scenes/
+│   │   ├── sprite_animation_demo.py
+│   │   ├── physics_demo.py
+│   │   └── lighting_demo.py
+│   └── demo_mains/
+├── assets/
+└── README.md
 ```
 
 ## Installation
@@ -337,6 +295,8 @@ pip install pygame
 6. Group UI elements appropriately
 7. Optimize collision layers and masks
 8. Use appropriate light radii and update frequencies
+9. Use lane-based sprite animation for efficient memory usage
+10. Set appropriate frame durations for smooth animations
 
 ## Contributing
 
