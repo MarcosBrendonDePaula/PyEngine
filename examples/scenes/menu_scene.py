@@ -74,7 +74,7 @@ class MenuUI(Entity):
             else:
                 print("Creating new game scene")
                 # Add game scene if it doesn't exist
-                from scenes.game_scene import DemoScene  # Updated import path
+                from examples.scenes.game_scene import DemoScene
                 game_scene = DemoScene()
                 self.scene.interface.scene_manager.add_scene('game', game_scene)
                 self.scene.interface.scene_manager.set_scene('game', transition=True)
@@ -106,9 +106,9 @@ class MenuScene(BaseScene):
     def get_required_resources(self) -> dict:
         """Specify resources that need to be loaded"""
         return {
-            'menu_background': 'assets/menu/background.png',
-            'menu_click': 'assets/menu/click.wav',
-            'menu_music': 'assets/menu/music.ogg'
+            'menu_background': 'examples/assets/menu/background.png',
+            'menu_click': 'examples/assets/menu/click.wav',
+            'menu_music': 'examples/assets/menu/music.ogg'
         }
         
     def load_resources(self):

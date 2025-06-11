@@ -1,7 +1,7 @@
 import multiprocessing as mp
 from engine import create_engine
-from scenes.menu_scene import MenuScene
-from scenes.ui_demo_scene import UIDemoScene
+from examples.scenes.menu_scene import MenuScene
+from examples.scenes.ui_demo_scene import UIDemoScene
 
 def main():
     # Get the number of CPU cores

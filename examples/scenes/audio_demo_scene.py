@@ -57,7 +57,7 @@ class AudioDemoScene(BaseScene):
             audio_source.add_component(renderer)
             
             # Alternar entre sons para melhor distinção
-            audio_file = "assets/menu/click.wav" if i % 2 == 0 else "assets/menu/music.ogg"
+            audio_file = "examples/assets/menu/click.wav" if i % 2 == 0 else "examples/assets/menu/music.ogg"
             
             # Adicionar componente de fonte de áudio
             # Para fontes direcionais, apontar para fora do círculo

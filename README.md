@@ -82,6 +82,13 @@ A high-performance 2D game engine built with Python and Pygame, featuring multi-
 
 ## Usage Examples
 
+All runnable demos are located in the `examples/` folder. Because they form a
+package, run them using Python's `-m` option so that imports resolve correctly.
+
+```bash
+python -m examples.main
+```
+
 ### 1. Local Multiplayer Combat Game
 ```python
 from engine import create_engine

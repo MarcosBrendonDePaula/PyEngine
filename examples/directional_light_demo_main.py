@@ -1,6 +1,6 @@
 import multiprocessing as mp
 from engine import create_engine
-from scenes.collider_demo_scene import ColliderDemoScene
+from examples.scenes.directional_light_demo import DirectionalLightDemo
 
 def main():
     # Get the number of CPU cores
@@ -14,19 +14,19 @@ def main():
     # Create the engine with specified thread count
     print("Creating engine")
     engine = create_engine(
-        title="PyEngine Collider Types Demo",
+        title="PyEngine Directional Light Demo",
         width=800,
         height=600,
         num_threads=num_threads
     )
     
-    # Create and set the collider demo scene
-    print("Creating collider demo scene")
-    demo_scene = ColliderDemoScene()
+    # Create and set the directional light demo scene
+    print("Creating directional light demo scene")
+    demo_scene = DirectionalLightDemo()
     
     # Add and set the scene
-    print("Adding collider demo scene to engine")
-    engine.set_scene("collider_demo", demo_scene)
+    print("Adding directional light demo scene to engine")
+    engine.set_scene("directional_light_demo", demo_scene)
     
     # Start the game
     print("Starting game")

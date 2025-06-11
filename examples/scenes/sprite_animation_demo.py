@@ -32,7 +32,7 @@ class SpriteAnimationDemo(BaseScene):
         self.character.position = pygame.math.Vector2(400, 300)  # Center of screen
         
         # Load sprite sheet and extract frames
-        sprite_sheet_path = "assets/character.png"
+        sprite_sheet_path = "examples/assets/character.png"
         if os.path.exists(sprite_sheet_path):
             print("Loading sprite sheet")
             # Load the sprite sheet (500x500 pixels)

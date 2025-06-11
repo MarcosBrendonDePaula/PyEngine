@@ -1,11 +1,11 @@
 import pygame
 from engine.core.scenes.scene_manager import SceneManager
-from scenes.day_night_cycle_scene import DayNightCycleScene
+from examples.scenes.sprite_animation_demo import SpriteAnimationDemo
 
 def main():
     pygame.init()
     screen = pygame.display.set_mode((800, 600))
-    pygame.display.set_caption("Day/Night Cycle Demo")
+    pygame.display.set_caption("Sprite Animation Demo")
     
     # Create interface mock for the scene manager
     class Interface:
@@ -17,8 +17,8 @@ def main():
     
     scene_manager = SceneManager()
     scene_manager.set_interface(interface)
-    scene_manager.add_scene("day_night", DayNightCycleScene())
-    scene_manager.set_scene("day_night", transition=False)
+    scene_manager.add_scene("sprite_demo", SpriteAnimationDemo())
+    scene_manager.set_scene("sprite_demo", transition=False)
     
     clock = pygame.time.Clock()
     running = True

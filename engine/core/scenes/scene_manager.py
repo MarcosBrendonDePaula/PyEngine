@@ -1,6 +1,6 @@
 from typing import Dict, Optional, List
 import pygame
-from scenes.loading_scene import LoadingScene
+from examples.scenes.loading_scene import LoadingScene
 
 class SceneManager:
     def __init__(self):
