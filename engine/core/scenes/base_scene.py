@@ -5,7 +5,22 @@ from ..resource_loader import ResourceLoader
 from .collision_system import CollisionSystem
 
 class BaseScene:
-    def __init__(self, num_threads: int = None):
+    """Base class for all scenes.
+
+    It handles entity management, resource loading, camera updates and
+    collision detection. The scene also performs simple viewport culling so
+    that entities outside the camera view are skipped during update and
+    render cycles.
+    """
+
+    def __init__(self, num_threads: int = None, culling_margin: int = 100):
+        """Create a new scene instance.
+
+        Args:
+            num_threads: Reserved for future multi-threaded processing.
+            culling_margin: Additional pixels around the camera used when
+                determining if an entity is considered visible.
+        """
         self.entities = []
         self.entity_groups: Dict[str, List] = {}
         self.interface = None
@@ -16,7 +31,8 @@ class BaseScene:
         self.camera = None  # Will be initialized when interface is set
         self.resource_loader = ResourceLoader()  # Get the singleton instance
         self.collision_system = CollisionSystem()  # Initialize collision system
-        
+        self.culling_margin = culling_margin  # Extra space around camera for culling
+
     def initialize(self):
         """Initialize scene resources. Called once when scene is added to manager."""
         if not self._is_initialized:
@@ -73,11 +89,46 @@ class BaseScene:
         """Get all entities in a specific group"""
         return self.entity_groups.get(group, [])
 
+    def set_culling_margin(self, margin: int) -> None:
+        """Set the viewport culling margin in pixels."""
+        self.culling_margin = max(0, int(margin))
+
+    def get_visible_entities(self, margin: int = None) -> List:
+        """Return all entities considered visible within the camera view."""
+        return [e for e in self.entities if self.is_entity_visible(e, margin)]
+
+    def is_entity_visible(self, entity, margin: int = None) -> bool:
+        """Check if an entity is within the camera view plus an optional margin."""
+        if margin is None:
+            margin = self.culling_margin
+
+        if not self.camera:
+            return True
+
+        cam_rect = pygame.Rect(
+            self.camera.position.x - margin,
+            self.camera.position.y - margin,
+            self.camera.width + margin * 2,
+            self.camera.height + margin * 2,
+        )
+
+        if hasattr(entity, "get_rect"):
+            try:
+                rect = entity.get_rect()
+                return cam_rect.colliderect(rect)
+            except Exception:
+                pass
+
+        if hasattr(entity, "position"):
+            return cam_rect.collidepoint(entity.position.x, entity.position.y)
+
+        return True
+
     def handle_event(self, event: pygame.event.Event):
         """Handle pygame events"""
         if not self._is_loaded:
             return
-            
+
         for entity in self.entities:
             if entity.active:
                 entity.handle_event(event)
@@ -94,13 +145,19 @@ class BaseScene:
         if self.camera:
             self.camera.update()
 
-        # Update all active entities
+        # Determine visible entities once per frame
+        visible_entities = set(self.get_visible_entities(self.culling_margin * 2))
+
+        # Update all active entities within view or UI entities
+        ui_entities = set(self.get_entities_by_group("ui"))
         for entity in self.entities:
-            if entity.active:
+            if not entity.active:
+                continue
+            if entity in ui_entities or entity in visible_entities:
                 entity.tick()
 
-        # Update collision system
-        self.collision_system.update(self.entities)
+        # Update collision system with visible entities
+        self.collision_system.update(list(visible_entities))
 
     def render(self, screen: pygame.Surface):
         """Render the scene"""
@@ -117,8 +174,12 @@ class BaseScene:
             camera_offset = (-self.camera.position.x, -self.camera.position.y)
 
         # First render non-UI entities with camera offset
+        visible_entities = set(self.get_visible_entities())
+        ui_entities = set(self.get_entities_by_group("ui"))
         for entity in self.entities:
-            if entity.visible and entity not in self.get_entities_by_group("ui"):
+            if not entity.visible or entity in ui_entities:
+                continue
+            if entity in visible_entities:
                 entity.render(screen, camera_offset)
 
         # Then render UI entities without camera offset (in screen space)
@@ -164,7 +225,7 @@ class BaseScene:
         for entity in self.entities[:]:  # Create a copy of the list to avoid modification during iteration
             self.remove_entity(entity)
         self.entity_groups.clear()
-        
+
         # Clear resources
         for name in list(self._resources.keys()):
             self.remove_resource(name)
