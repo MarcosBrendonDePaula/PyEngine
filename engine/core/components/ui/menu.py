@@ -36,7 +36,8 @@ class MenuButton(Button):
         abs_x, abs_y = self.get_absolute_position()
         
         # Background
-        if self._hovering and self.enabled:
+        # Button.hovered is updated by Button.handle_event
+        if self.hovered and self.enabled:
             color = self.hover_color
         else:
             color = self.background_color or (255, 255, 255)

@@ -2,6 +2,9 @@
 
 A high-performance 2D game engine built with Python and Pygame, featuring multi-core processing, advanced lighting, physics simulation, sprite animation, and a comprehensive UI system.
 
+Para um guia rápido em português de como criar um jogo simples, consulte
+[docs/CRIANDO_JOGOS_PT.md](docs/CRIANDO_JOGOS_PT.md).
+
 ## Core Features
 
 ### Multi-Core Processing
