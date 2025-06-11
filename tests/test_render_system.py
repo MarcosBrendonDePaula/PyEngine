@@ -1,16 +1,22 @@
 import unittest
 from unittest.mock import MagicMock, patch
 import pygame
+import os
 
 # Mock pygame for testing purposes
 pygame.init = MagicMock()
+pygame.font = MagicMock()
 pygame.font.init = MagicMock()
+# Mock pygame.font.Font to return a mock object that has a render method
+pygame.font.Font = MagicMock(return_value=MagicMock(render=MagicMock(return_value=MagicMock(get_rect=MagicMock(return_value=MagicMock(x=0, y=0, w=0, h=0))))))
+
 pygame.display = MagicMock()
 pygame.display.update = MagicMock()
 pygame.display.flip = MagicMock()
 
 # Mock pygame.Rect to return a mock object with expected attributes
-pygame.Rect = MagicMock(return_value=MagicMock(x=0, y=0, w=0, h=0, colliderect=MagicMock(return_value=True)))
+# Ensure x, y, w, h are set correctly for tests that check them
+pygame.Rect = MagicMock(side_effect=lambda x, y, w, h: MagicMock(x=x, y=y, w=w, h=h, colliderect=MagicMock(return_value=True)))
 
 # Mock pygame.image.load
 pygame.image = MagicMock()
@@ -31,14 +37,14 @@ class MockSurface(MagicMock):
         return MockSurface()
     def convert_alpha(self):
         return MockSurface()
-    def get_rect(self):
-        return MagicMock(x=0, y=0, w=0, h=0) # Return a mock rect
+    # Make get_rect a MagicMock from the start
+    get_rect = MagicMock()
 
 pygame.Surface = MockSurface # Assign our custom mock class to pygame.Surface
 
 # Mock pygame.draw
 pygame.draw = MagicMock()
-pygame.draw.rect = MagicMock()
+pygame.draw.rect = MagicMock() 
 
 # Import the classes to be tested after mocking pygame
 from engine.core.interface import Interface
@@ -51,8 +57,7 @@ class TestRenderSystem(unittest.TestCase):
 
     def setUp(self):
         self.mock_screen = MockSurface() # Use our custom mock surface
-        self.mock_screen.get_width.return_value = 800
-        self.mock_screen.get_height.return_value = 600
+        # Now get_rect is a MagicMock, so we can set its return_value
         self.mock_screen.get_rect.return_value = MagicMock(x=0, y=0, w=800, h=600, colliderect=MagicMock(return_value=True))
         
         # Reset pygame.display.update mock before each test
