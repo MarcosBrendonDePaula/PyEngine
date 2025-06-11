@@ -1,6 +1,7 @@
 import pygame
 import math
 from ..component import Component
+from ..audio_manager import init_audio
 
 class AudioSourceComponent(Component):
     def __init__(self, audio_path, max_distance=500, min_distance=50, is_directional=True, direction=0):
@@ -11,9 +12,8 @@ class AudioSourceComponent(Component):
         self.is_directional = is_directional  # Se True, som é direcional. Se False, é global
         self.direction = math.radians(direction)  # Direção da fonte em radianos (0 = direita)
         
-        # Inicializar mixer se necessário
-        if not pygame.mixer.get_init():
-            pygame.mixer.init()
+        # Ensure mixer initialized once via audio manager
+        init_audio()
             
         # Carregar e configurar o som
         self.sound = pygame.mixer.Sound(audio_path)

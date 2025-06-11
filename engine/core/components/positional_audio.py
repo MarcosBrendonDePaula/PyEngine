@@ -1,6 +1,7 @@
 import pygame
 import math
 from ..component import Component
+from ..audio_manager import init_audio
 
 class PositionalAudioComponent(Component):
     def __init__(self, audio_path, max_distance=500, min_distance=50, fov=360):
@@ -13,9 +14,8 @@ class PositionalAudioComponent(Component):
         self.listener = None  # Reference to the listener entity
         self.listener_direction = 0  # Angle in radians (0 = right, pi/2 = up)
         
-        # Initialize pygame mixer if not already initialized
-        if not pygame.mixer.get_init():
-            pygame.mixer.init()
+        # Ensure mixer initialized once via audio manager
+        init_audio()
             
         # Load and setup the sound
         self.sound = pygame.mixer.Sound(audio_path)
