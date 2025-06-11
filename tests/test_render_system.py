@@ -4,27 +4,41 @@ import pygame
 
 # Mock pygame for testing purposes
 pygame.init = MagicMock()
-pygame.font = MagicMock()
+pygame.font.init = MagicMock()
 pygame.display = MagicMock()
-pygame.Surface = MagicMock()
-pygame.Rect = MagicMock(side_effect=lambda x, y, w, h: MagicMock(x=x, y=y, w=w, h=h, colliderect=MagicMock(return_value=True)))
+pygame.display.update = MagicMock()
+pygame.display.flip = MagicMock()
+
+# Mock pygame.Rect to return a mock object with expected attributes
+pygame.Rect = MagicMock(return_value=MagicMock(x=0, y=0, w=0, h=0, colliderect=MagicMock(return_value=True)))
+
+# Mock pygame.image.load
 pygame.image = MagicMock()
+pygame.image.load = MagicMock()
+
+# Mock pygame.mixer.Sound
 pygame.mixer = MagicMock()
+pygame.mixer.Sound = MagicMock()
+
+# Mock pygame.math.Vector2
+pygame.math = MagicMock()
 pygame.math.Vector2 = MagicMock(side_effect=lambda x, y: MagicMock(x=x, y=y))
 
-# Mock the convert and convert_alpha methods for pygame.Surface
-def mock_convert():
-    mock_surface = MagicMock()
-    mock_surface.get_rect.return_value = MagicMock()
-    return mock_surface
+# Mock pygame.Surface as a class that can be instantiated
+# And ensure its instances have convert/convert_alpha methods
+class MockSurface(MagicMock):
+    def convert(self):
+        return MockSurface()
+    def convert_alpha(self):
+        return MockSurface()
+    def get_rect(self):
+        return MagicMock(x=0, y=0, w=0, h=0) # Return a mock rect
 
-def mock_convert_alpha():
-    mock_surface = MagicMock()
-    mock_surface.get_rect.return_value = MagicMock()
-    return mock_surface
+pygame.Surface = MockSurface # Assign our custom mock class to pygame.Surface
 
-pygame.Surface.return_value.convert = MagicMock(side_effect=mock_convert)
-pygame.Surface.return_value.convert_alpha = MagicMock(side_effect=mock_convert_alpha)
+# Mock pygame.draw
+pygame.draw = MagicMock()
+pygame.draw.rect = MagicMock()
 
 # Import the classes to be tested after mocking pygame
 from engine.core.interface import Interface
@@ -36,7 +50,7 @@ from engine.core.sprite import Sprite
 class TestRenderSystem(unittest.TestCase):
 
     def setUp(self):
-        self.mock_screen = MagicMock(spec=pygame.Surface)
+        self.mock_screen = MockSurface() # Use our custom mock surface
         self.mock_screen.get_width.return_value = 800
         self.mock_screen.get_height.return_value = 600
         self.mock_screen.get_rect.return_value = MagicMock(x=0, y=0, w=800, h=600, colliderect=MagicMock(return_value=True))
@@ -107,7 +121,7 @@ class TestRenderSystem(unittest.TestCase):
     def test_sprite_render_returns_rect(self):
         sprite = Sprite(0, 0)
         # Mock image and rect for the sprite
-        mock_image = MagicMock(spec=pygame.Surface)
+        mock_image = MockSurface() # Use our custom mock surface
         mock_image.get_rect.return_value = MagicMock(x=0, y=0, w=50, h=50, center=(0,0))
         sprite.image = mock_image
         sprite.rect = mock_image.get_rect()
