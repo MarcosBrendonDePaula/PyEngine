@@ -2,13 +2,20 @@ from .core.interface import Interface
 from .core.entity import Entity
 from .core.sprite import Sprite
 from .core.camera import Camera
+from .core.advanced_camera import AdvancedCamera
 from .core.input import input_manager
 from .core.component import Component
 from .core.components.keyboard_controller import KeyboardController
+from .core.components.gamepad_controller import GamepadController
 from .core.components.rectangle_renderer import RectangleRenderer
 from .core.components.collider import Collider
 from .core.components.physics import Physics
+from .core.components.particle_system import ParticleSystem
+from .core.components.tilemap import TileMap
+from .core.components.network_component import NetworkComponent
 from .core.scenes.base_scene import BaseScene
+from .core.save_manager import SaveManager
+from .core.pathfinding import astar
 import multiprocessing as mp
 
 class Engine:
@@ -78,13 +85,20 @@ __all__ = [
     'Entity',
     'Sprite',
     'Camera',
+    'AdvancedCamera',
     'input_manager',
     'create_engine',
     'Component',
     'KeyboardController',
+    'GamepadController',
     'RectangleRenderer',
     'Collider',
     'Physics',
+    'ParticleSystem',
+    'TileMap',
+    'NetworkComponent',
+    'SaveManager',
+    'astar',
     
     # UI components
     'Button',
