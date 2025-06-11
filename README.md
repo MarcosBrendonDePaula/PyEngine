@@ -296,3 +296,27 @@ def main():
     engine.set_scene("game", PuzzleScene())
     engine.run()
 ```
+### 4. Liquid Simulator Demo
+```python
+import pygame
+from engine.core.scenes.scene_manager import SceneManager
+from scenes.liquid_demo_scene import LiquidDemoScene
+
+pygame.init()
+screen = pygame.display.set_mode((800, 600))
+manager = SceneManager()
+manager.add_scene("liquid", LiquidDemoScene())
+manager.set_scene("liquid", transition=False)
+clock = pygame.time.Clock()
+running = True
+while running:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+        manager.handle_event(event)
+    manager.update()
+    screen.fill((0, 0, 0))
+    manager.render(screen)
+    pygame.display.flip()
+    clock.tick(60)
+```
