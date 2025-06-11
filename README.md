@@ -7,8 +7,8 @@ A high-performance 2D game engine built with Python and Pygame, featuring multi-
 ### Multi-Core Processing
 - Automatic CPU core detection and utilization
 - Parallel entity processing for improved performance
-- Configurable thread count (defaults to 75% of available cores)
-- Efficient workload distribution
+- Configurable thread count (defaults to all available cores)
+- Efficient workload distribution using a thread pool
 
 ### Scene Management
 - Scene-based game organization

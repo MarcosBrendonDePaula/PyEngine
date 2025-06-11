@@ -1,4 +1,6 @@
 import pygame
+import multiprocessing as mp
+from concurrent.futures import ThreadPoolExecutor
 from typing import List, Dict, Optional, Any
 from ..camera import Camera
 from ..resource_loader import ResourceLoader
@@ -6,6 +8,7 @@ from .collision_system import CollisionSystem
 
 class BaseScene:
     def __init__(self, num_threads: int = None):
+        self.num_threads = num_threads if num_threads is not None else mp.cpu_count()
         self.entities = []
         self.entity_groups: Dict[str, List] = {}
         self.interface = None
@@ -42,6 +45,10 @@ class BaseScene:
     def on_resume(self):
         """Called when scene is resumed (top scene was popped)"""
         pass
+
+    def set_num_threads(self, num_threads: int) -> None:
+        """Update the number of threads used for parallel processing"""
+        self.num_threads = max(1, num_threads)
 
     def set_interface(self, interface):
         """Set the interface reference and initialize camera"""
@@ -94,10 +101,13 @@ class BaseScene:
         if self.camera:
             self.camera.update()
 
-        # Update all active entities
-        for entity in self.entities:
-            if entity.active:
-                entity.tick()
+        # Update all active entities in parallel
+        active_entities = [e for e in self.entities if e.active]
+        if active_entities:
+            with ThreadPoolExecutor(max_workers=self.num_threads) as executor:
+                futures = [executor.submit(entity.tick) for entity in active_entities]
+                for future in futures:
+                    future.result()
 
         # Update collision system
         self.collision_system.update(self.entities)
