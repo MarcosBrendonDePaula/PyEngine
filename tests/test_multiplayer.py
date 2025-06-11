@@ -105,3 +105,35 @@ def test_sync_component_auto_attrs():
         and m.get('data', {}).get('position.y') == 34
         for m in received
     )
+
+
+def test_new_client_receives_existing_players():
+    server = DedicatedServer(port=0)
+    server.start()
+    port = server.sock.getsockname()[1]
+
+    client1 = Client('p1', '127.0.0.1', port)
+    client1.start()
+
+    # wait for server to register client1
+    for _ in range(50):
+        time.sleep(0.01)
+        if server.clients:
+            break
+
+    received = []
+    client2 = Client('p2', '127.0.0.1', port)
+    client2.recv_callback = lambda m: received.append(m)
+    client2.start()
+
+    # wait for join messages about p1
+    for _ in range(50):
+        time.sleep(0.01)
+        if any(m.get('cmd') == 'join' and m.get('player') == 'p1' for m in received):
+            break
+
+    client1.stop()
+    client2.stop()
+    server.stop()
+
+    assert any(m.get('cmd') == 'join' and m.get('player') == 'p1' for m in received)

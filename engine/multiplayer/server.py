@@ -9,6 +9,7 @@ class DedicatedServer:
         self.host = host
         self.port = port
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        # map of player_id -> {"addr": (host, port), "host": bool}
         self.clients = {}
         self.running = False
         self.thread = None
@@ -28,11 +29,12 @@ class DedicatedServer:
         self.sock.close()
 
     def broadcast(self, message: dict, exclude: str | None = None):
+        """Send a message to all connected clients except the excluded one."""
         data = json.dumps(message).encode('utf-8')
-        for pid, addr in list(self.clients.items()):
+        for pid, info in list(self.clients.items()):
             if pid == exclude:
                 continue
-            self.sock.sendto(data, addr)
+            self.sock.sendto(data, info["addr"])
 
     def _handle_packet(self, data: str, addr: tuple):
         try:
@@ -42,12 +44,25 @@ class DedicatedServer:
         cmd = msg.get('cmd')
         pid = msg.get('player')
         if cmd == 'join':
-            self.clients[pid] = addr
-            self.broadcast({'cmd': 'join', 'player': pid, 'host': msg.get('host')}, exclude=pid)
+            # store the new client's address and host flag
+            self.clients[pid] = {"addr": addr, "host": msg.get("host")}
+            # inform the newly connected client of all existing players
+            for other_pid, info in self.clients.items():
+                if other_pid == pid:
+                    continue
+                self.sock.sendto(
+                    json.dumps({"cmd": "join", "player": other_pid, "host": info.get("host")}).encode("utf-8"),
+                    addr,
+                )
+            # notify existing clients of the new player
+            self.broadcast({"cmd": "join", "player": pid, "host": msg.get("host")}, exclude=pid)
         elif cmd == 'leave':
             if pid in self.clients:
+                host_flag = self.clients[pid].get("host")
                 del self.clients[pid]
-            self.broadcast({'cmd': 'leave', 'player': pid, 'host': msg.get('host')})
+            else:
+                host_flag = msg.get("host")
+            self.broadcast({"cmd": "leave", "player": pid, "host": host_flag})
         elif cmd == 'update':
             self.broadcast(msg, exclude=pid)
 
