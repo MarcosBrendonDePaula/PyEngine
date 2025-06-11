@@ -13,6 +13,7 @@ from .core.components.physics import Physics
 from .core.components.particle_system import ParticleSystem
 from .core.components.tilemap import TileMap
 from .core.components.network_component import NetworkComponent
+from .multiplayer import DedicatedServer, Client, SyncComponent
 from .core.scenes.base_scene import BaseScene
 from .core.save_manager import SaveManager
 from .core.pathfinding import astar
@@ -97,6 +98,9 @@ __all__ = [
     'ParticleSystem',
     'TileMap',
     'NetworkComponent',
+    'DedicatedServer',
+    'Client',
+    'SyncComponent',
     'SaveManager',
     'astar',
     
