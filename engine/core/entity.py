@@ -1,5 +1,5 @@
 import pygame
-from typing import Dict, Type, Optional, Any, Tuple, TypeVar
+from typing import Dict, Type, Optional, Any, Tuple, TypeVar, List
 
 from engine.core.component import Component
 
