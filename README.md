@@ -97,6 +97,13 @@ an entity and can synchronize any attribute by listing it in the
 
 ## Usage Examples
 
+All runnable demos are located in the `examples/` folder. Because they form a
+package, run them using Python's `-m` option so that imports resolve correctly.
+
+```bash
+python -m examples.main
+```
+
 ### 1. Local Multiplayer Combat Game
 ```python
 from engine import create_engine

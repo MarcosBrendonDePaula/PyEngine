@@ -23,10 +23,10 @@ class GameScene(BaseScene):
         """Specify resources that need to be loaded"""
         # Use paths relative to the current working directory
         return {
-            'game_background': 'assets/menu/background.png',  # Use menu background for now
-            'player_sprite': 'assets/menu/background.png',    # Use menu background for now
-            'jump_sound': 'assets/menu/click.wav',           # Use menu click sound for now
-            'game_music': 'assets/menu/music.ogg'            # Use menu music for now
+            'game_background': 'examples/assets/menu/background.png',  # Use menu background for now
+            'player_sprite': 'examples/assets/menu/background.png',    # Use menu background for now
+            'jump_sound': 'examples/assets/menu/click.wav',           # Use menu click sound for now
+            'game_music': 'examples/assets/menu/music.ogg'            # Use menu music for now
         }
 
     def load_resources(self):

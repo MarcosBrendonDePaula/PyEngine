@@ -1,7 +1,7 @@
 import pygame
 import sys
 from engine.core.scenes.scene_manager import SceneManager
-from scenes.light_demo_scene import LightDemoScene
+from examples.scenes.audio_demo_scene import AudioDemoScene
 
 def main():
     # Initialize Pygame
@@ -9,14 +9,14 @@ def main():
     
     # Create window
     screen = pygame.display.set_mode((800, 600))
-    pygame.display.set_caption("Lighting Demo")
+    pygame.display.set_caption("Positional Audio Demo")
     
     # Create and set up scene manager
     scene_manager = SceneManager()
     
     # Add and set the scene
-    scene_manager.add_scene("light_demo", LightDemoScene())
-    scene_manager.set_scene("light_demo", transition=False)
+    scene_manager.add_scene("audio_demo", AudioDemoScene())
+    scene_manager.set_scene("audio_demo", transition=False)
     
     # Game loop
     clock = pygame.time.Clock()

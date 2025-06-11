@@ -1,48 +1,50 @@
 import pygame
 import sys
+from engine.core.interface import Interface
 from engine.core.scenes.scene_manager import SceneManager
-from scenes.audio_demo_scene import AudioDemoScene
+from examples.scenes.ui_demo_scene import UIDemoScene
 
 def main():
     # Initialize Pygame
     pygame.init()
-    
+
     # Create window
-    screen = pygame.display.set_mode((800, 600))
-    pygame.display.set_caption("Positional Audio Demo")
-    
-    # Create and set up scene manager
+    WINDOW_WIDTH = 800
+    WINDOW_HEIGHT = 600
+    screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
+    pygame.display.set_caption("PyEngine UI Demo")
+
+    # Create interface wrapper
+    interface = Interface(screen)
+
+    # Create scene manager and add scenes
     scene_manager = SceneManager()
-    
-    # Add and set the scene
-    scene_manager.add_scene("audio_demo", AudioDemoScene())
-    scene_manager.set_scene("audio_demo", transition=False)
-    
+    scene_manager.set_interface(interface)  # Set interface before adding scenes
+    scene_manager.add_scene("ui_demo", UIDemoScene())
+    scene_manager.set_scene("ui_demo", transition=False)
+
     # Game loop
     clock = pygame.time.Clock()
     running = True
-    
+
     while running:
         # Handle events
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-            elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-                running = False
             else:
                 scene_manager.handle_event(event)
         
         # Update
+        dt = clock.tick(60) / 1000.0  # Convert to seconds
         scene_manager.update()
         
         # Render
-        screen.fill((0, 0, 0))
+        screen.fill((0, 0, 0))  # Light gray background
         scene_manager.render(screen)
         pygame.display.flip()
-        
-        # Cap at 60 FPS
-        clock.tick(60)
-    
+
+    # Quit
     pygame.quit()
     sys.exit()
 
