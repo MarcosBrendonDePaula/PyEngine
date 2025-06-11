@@ -359,3 +359,20 @@ while running:
     pygame.display.flip()
     clock.tick(60)
 ```
+
+### 6. Networked Multiplayer Demo
+Start a server and connect multiple clients to see synchronized movement.
+
+**Server:**
+```bash
+python network_server.py
+```
+
+**Client:**
+```bash
+python network_client.py player1
+python network_client.py player2 --host 127.0.0.1 --port 6000
+```
+
+The client script uses `DedicatedServer`, `Client`, and `SyncComponent` to
+replicate each player's position across all connected peers.
