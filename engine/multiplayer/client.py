@@ -10,14 +10,19 @@ class Client:
         self.player_id = player_id
         self.is_host = is_host
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        # Bind so the client is immediately ready to receive messages
+        self.sock.bind(("", 0))
         self.recv_callback = None
         self.running = False
         self.thread = None
+        self.ready = threading.Event()
 
     def start(self):
         self.running = True
         self.thread = threading.Thread(target=self._recv_loop, daemon=True)
         self.thread.start()
+        # Ensure the receive thread is waiting before sending the join packet
+        self.ready.wait(timeout=0.1)
         self.send({'cmd': 'join', 'player': self.player_id, 'host': self.is_host})
 
     def stop(self):
@@ -34,6 +39,7 @@ class Client:
         self.sock.sendto(json.dumps(message).encode('utf-8'), self.server)
 
     def _recv_loop(self):
+        self.ready.set()
         while self.running:
             try:
                 data, _ = self.sock.recvfrom(2048)
