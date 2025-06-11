@@ -77,6 +77,8 @@ from .core.components.ui.grid import Grid, GridColumn
 from .core.components.ui.image import Image, Icon
 from .core.components.ui.scrollview import ScrollView
 from .core.components.ui.titled_panel import TitledPanel
+from .core.components.ui.checkbox import Checkbox
+from .core.components.ui.circular_progress import CircularProgress
 
 __all__ = [
     # Core components
@@ -128,5 +130,7 @@ __all__ = [
     'Image',
     'Icon',
     'ScrollView',
-    'TitledPanel'
+    'TitledPanel',
+    'Checkbox',
+    'CircularProgress'
 ]

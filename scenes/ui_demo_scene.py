@@ -20,6 +20,8 @@ from engine.core.components.ui.scrollview import ScrollView
 from engine.core.components.ui.titled_panel import TitledPanel
 from engine.core.components.ui.button import Button
 from engine.core.components.ui.multiline_input import MultilineInput
+from engine.core.components.ui.checkbox import Checkbox
+from engine.core.components.ui.circular_progress import CircularProgress
 
 class TooltipButton(Button, TooltipMixin):
     def __init__(self, x: int, y: int, width: int, height: int, 
@@ -118,7 +120,7 @@ class UIDemoScene(BaseScene):
                                             "Type multiple lines here...")
         self.multiline_input.set_text("This is a multiline input field.\nYou can type multiple lines of text.\nIt supports scrolling and text selection.")
         panel.add_child(self.multiline_input)
-        
+
         # HTML View
         y += 200
         html_label = Label(20, y, "HTML View:")
@@ -136,6 +138,23 @@ class UIDemoScene(BaseScene):
         """
         self.html_view.set_html(sample_html)
         panel.add_child(self.html_view)
+
+        # Checkbox
+        y += 200
+        checkbox_label = Label(20, y, "Checkbox:")
+        panel.add_child(checkbox_label)
+
+        self.checkbox = Checkbox(20, y + 30, 20, "Accept")
+        panel.add_child(self.checkbox)
+
+        # Circular Progress
+        y += 80
+        circle_label = Label(20, y, "Circular Progress:")
+        panel.add_child(circle_label)
+
+        self.progress_circle = CircularProgress(20, y + 60, 30)
+        self.progress_circle.progress = 0.5
+        panel.add_child(self.progress_circle)
     
     def _setup_advanced_controls(self, panel):
         """Setup advanced controls demo"""
@@ -246,9 +265,11 @@ class UIDemoScene(BaseScene):
     
     def update(self):
         super().update()
-        
+
         # Animate progress bar
         self.progress_bar.progress = (self.progress_bar.progress + 0.001) % 1.0
+        if hasattr(self, 'progress_circle'):
+            self.progress_circle.progress = (self.progress_circle.progress + 0.005) % 1.0
         
     def render(self, screen: pygame.Surface):
         """Render scene"""
