@@ -44,7 +44,7 @@ class GridHeaderCell(Button):
         abs_x, abs_y = self.get_absolute_position()
         
         # Background
-        if self._hovering and self.enabled and self.column.sortable:
+        if self.hovered and self.enabled and self.column.sortable:
             color = self.hover_color
         else:
             color = self.background_color or (240, 240, 240)
