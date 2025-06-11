@@ -73,10 +73,25 @@ A high-performance 2D game engine built with Python and Pygame, featuring multi-
 ### Advanced Features
 - HTMLView, Tooltip, Modal, Menu, Image, RadioButton, Select, InputSelect
 
+
 ### UI Architecture
 - Hierarchical component system
 - Event propagation and automatic layout management
 - Style inheritance and state management
+
+## Multiplayer Support
+
+PyEngine provides lightweight networking utilities for building
+multiplayer games. Use `DedicatedServer` to host a match and manage
+connected players. Clients can communicate with the server using the
+`Client` class and keep entities synchronized via `SyncComponent`.
+Set ``is_host=True`` when creating a ``Client`` to mark the player as
+the host, allowing other peers to easily identify who is acting as the
+server.
+`SyncComponent` now starts its networking automatically when attached to
+an entity and can synchronize any attribute by listing it in the
+``tracked_attrs`` parameter. By default, it syncs ``position.x`` and
+``position.y`` so entities can replicate movement with minimal code.
 
 ---
 
