@@ -235,7 +235,10 @@ class SpriteAnimation(Component):
         
         # Update frame based on time and speed multiplier
         frame_duration = self.current_animation.frame_duration / self.current_animation.speed_multiplier
-        self.current_animation.time_accumulated += 1/60  # Assuming 60 FPS
+        dt = 1/60
+        if self.entity and self.entity.scene and self.entity.scene.interface:
+            dt = self.entity.scene.interface.clock.get_time() / 1000.0
+        self.current_animation.time_accumulated += dt
         
         while self.current_animation.time_accumulated >= frame_duration:
             self.current_animation.time_accumulated -= frame_duration
