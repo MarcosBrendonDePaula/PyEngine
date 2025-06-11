@@ -1,4 +1,5 @@
 import pygame
+from engine.core.interface import Interface
 from engine.core.scenes.scene_manager import SceneManager
 from scenes.water_particle_scene import WaterParticleScene
 
@@ -8,7 +9,10 @@ def main():
     screen = pygame.display.set_mode((800, 600))
     pygame.display.set_caption("Water Particle Demo")
 
+    interface = Interface(screen)
+
     scene_manager = SceneManager()
+    scene_manager.set_interface(interface)
     scene_manager.add_scene("water", WaterParticleScene())
     scene_manager.set_scene("water", transition=False)
 
