@@ -1,5 +1,5 @@
 import pygame
-from typing import List, Dict, Tuple, Optional
+from typing import List, Dict, Tuple, Optional, Callable
 from .ui_element import UIElement
 from .label import Label
 import html
@@ -47,6 +47,7 @@ class HTMLElement:
         self.width = 0
         self.height = 0
         self.style = CSSStyle()
+        self.events: Dict[str, str] = {}
         
         # Parse inline style if present
         if 'style' in self.attributes:
@@ -102,10 +103,25 @@ class HTMLView(UIElement):
         # Content
         self.root: Optional[HTMLElement] = None
         self.elements: List[HTMLElement] = []
+        self.event_handlers: Dict[str, callable] = {}
         
         # Scroll state
         self.scroll_y = 0
         self.max_scroll = 0
+
+    def register_handler(self, name: str, handler: Callable):
+        """Register a named event handler that can be referenced from HTML"""
+        self.event_handlers[name] = handler
+
+    def _get_element_rect(self, element: HTMLElement) -> pygame.Rect:
+        """Get the absolute screen rectangle of an element"""
+        abs_x, abs_y = self.get_absolute_position()
+        return pygame.Rect(
+            abs_x + (element.x - self.x),
+            abs_y + (element.y - self.y) - self.scroll_y,
+            element.width,
+            element.height,
+        )
         
     def set_html(self, html_content: str):
         """Parse and set HTML content"""
@@ -154,6 +170,10 @@ class HTMLView(UIElement):
                     end = html_content.find('>', i)
                     if end != -1:
                         tag_content = html_content[i+1:end].strip()
+                        self_closing = False
+                        if tag_content.endswith('/'):
+                            self_closing = True
+                            tag_content = tag_content[:-1].rstrip()
                         parts = tag_content.split(' ', 1)
                         tag_name = parts[0].lower()
                         
@@ -185,13 +205,19 @@ class HTMLView(UIElement):
                                     attributes[attr_name] = attr_value
                                     attr_str = attr_str[end_quote+1:]
                         
+                        # Separate event attributes (on*)
+                        events = {k: v for k, v in attributes.items() if k.lower().startswith('on')}
+                        for ev in events:
+                            del attributes[ev]
+
                         # Create element
                         element = HTMLElement(tag_name, attributes=attributes)
+                        element.events = events
                         current.add_child(element)
-                        
+
                         # Self-closing tags
-                        if tag_name not in ['br', 'img', 'hr']:
-                            tag_stack.append(current)
+                        if not self_closing and tag_name not in ['br', 'img', 'hr']:
+                            tag_stack.append(element)
                             current = element
                             
                         i = end + 1
@@ -259,6 +285,10 @@ class HTMLView(UIElement):
                     color = element.parent.style.color if element.parent and element.parent.style.color else self.text_color
                     text_surface = font.render(word, True, color)
                     word_element = HTMLElement('text', content=word)
+                    word_element.parent = element.parent
+                    if element.parent:
+                        word_element.attributes.update(element.parent.attributes)
+                        word_element.events.update(element.parent.events)
                     word_element.width = text_surface.get_width()
                     word_element.height = text_surface.get_height()
                     
@@ -316,10 +346,49 @@ class HTMLView(UIElement):
             
         if event.type == pygame.MOUSEWHEEL:
             # Scroll
-            self.scroll_y = max(0, min(self.max_scroll, 
+            self.scroll_y = max(0, min(self.max_scroll,
                                      self.scroll_y - event.y * 20))
             return True
-            
+
+        if event.type in (pygame.MOUSEBUTTONDOWN, pygame.MOUSEBUTTONUP, pygame.MOUSEMOTION):
+            if hasattr(event, "pos"):
+                for element in self.elements:
+                    if not element.events:
+                        continue
+                    rect = self._get_element_rect(element)
+                    inside = rect.collidepoint(event.pos)
+
+                    if event.type == pygame.MOUSEMOTION:
+                        hovered = getattr(element, "_hovered", False)
+                        if inside and not hovered and element.events.get("onmouseover"):
+                            handler = self.event_handlers.get(element.events["onmouseover"])
+                            if handler:
+                                handler()
+                            element._hovered = True
+                        elif not inside and hovered and element.events.get("onmouseout"):
+                            handler = self.event_handlers.get(element.events["onmouseout"])
+                            if handler:
+                                handler()
+                            element._hovered = False
+
+                    if inside:
+                        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and element.events.get("onmousedown"):
+                            handler = self.event_handlers.get(element.events["onmousedown"])
+                            if handler:
+                                handler()
+                            return True
+                        if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
+                            if element.events.get("onclick"):
+                                handler = self.event_handlers.get(element.events["onclick"])
+                                if handler:
+                                    handler()
+                                return True
+                            if element.events.get("onmouseup"):
+                                handler = self.event_handlers.get(element.events["onmouseup"])
+                                if handler:
+                                    handler()
+                                return True
+
         return False
         
     def render(self, screen: pygame.Surface):
