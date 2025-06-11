@@ -19,14 +19,14 @@ class RectangleRenderer(Component):
             self.entity.position.y - camera_offset[1] + self.offset.y
         )
 
-        pygame.draw.rect(
-            screen,
-            self.color,
-            (render_pos[0] - self.width/2,
-             render_pos[1] - self.height/2,
-             self.width,
-             self.height)
+        rect = pygame.Rect(
+            render_pos[0] - self.width/2,
+            render_pos[1] - self.height/2,
+            self.width,
+            self.height
         )
+        pygame.draw.rect(screen, self.color, rect)
+        return rect
 
     def set_color(self, color: Tuple[int, int, int]):
         """Change the rectangle's color"""

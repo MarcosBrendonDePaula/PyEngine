@@ -49,7 +49,7 @@ class Sprite(Entity):
     def render(self, screen: pygame.Surface, camera_offset: Tuple[float, float] = (0, 0)):
         """Render the sprite to the screen"""
         if not self.visible or not self.image:
-            return
+            return None
 
         render_pos = (
             self.position.x - camera_offset[0],
@@ -63,3 +63,5 @@ class Sprite(Entity):
         
         if screen_rect.colliderect(sprite_rect):
             screen.blit(self.image, sprite_rect)
+            return sprite_rect
+        return None

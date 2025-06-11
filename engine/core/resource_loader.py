@@ -28,6 +28,8 @@ class ResourceLoader:
                 print(f"Loading resource: {path}")
                 if path.endswith('.png'):
                     resource = pygame.image.load(path).convert_alpha()
+                elif path.endswith(('.jpg', '.jpeg')):
+                    resource = pygame.image.load(path).convert()
                 elif path.endswith('.wav'):
                     resource = pygame.mixer.Sound(path)
                 elif path.endswith('.ogg') or path.endswith('.mp3'):

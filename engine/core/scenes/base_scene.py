@@ -16,6 +16,8 @@ class BaseScene:
         self.camera = None  # Will be initialized when interface is set
         self.resource_loader = ResourceLoader()  # Get the singleton instance
         self.collision_system = CollisionSystem()  # Initialize collision system
+        self._current_frame_dirty_rects = [] # List to store dirty rectangles for optimized rendering
+        self._previous_frame_dirty_rects = [] # List to store dirty rectangles from the previous frame
         
     def initialize(self):
         """Initialize scene resources. Called once when scene is added to manager."""
@@ -116,15 +118,22 @@ class BaseScene:
         if self.camera:
             camera_offset = (-self.camera.position.x, -self.camera.position.y)
 
+        # Clear dirty rects from previous frame
+        self.clear_dirty_rects()
+
         # First render non-UI entities with camera offset
         for entity in self.entities:
             if entity.visible and entity not in self.get_entities_by_group("ui"):
-                entity.render(screen, camera_offset)
+                rendered_rects = entity.render(screen, camera_offset)
+                for rect in rendered_rects:
+                    self.add_dirty_rect(rect)
 
         # Then render UI entities without camera offset (in screen space)
         for entity in self.get_entities_by_group("ui"):
             if entity.visible:
-                entity.render(screen, (0, 0))
+                rendered_rects = entity.render(screen, (0, 0))
+                for rect in rendered_rects:
+                    self.add_dirty_rect(rect)
 
     def _render_loading_screen(self, screen: pygame.Surface):
         """Render a simple loading screen"""
@@ -172,3 +181,20 @@ class BaseScene:
         self._is_loaded = False
         self._loading_progress = 0
         self.collision_system.clear()  # Clear collision system
+
+
+    def add_dirty_rect(self, rect: pygame.Rect):
+        """Add a rectangle to the list of dirty rectangles for the current frame."""
+        self._current_frame_dirty_rects.append(rect)
+
+    def get_dirty_rects(self) -> List[pygame.Rect]:
+        """Get all dirty rectangles from the current and previous frame."""
+        all_dirty_rects = self._current_frame_dirty_rects + self._previous_frame_dirty_rects
+        return all_dirty_rects
+
+    def clear_dirty_rects(self):
+        """Clear dirty rectangles for the next frame."""
+        self._previous_frame_dirty_rects = self._current_frame_dirty_rects
+        self._current_frame_dirty_rects = []
+
+

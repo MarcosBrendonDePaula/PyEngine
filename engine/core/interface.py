@@ -82,8 +82,11 @@ class Interface:
         """Render the current scene"""
         self.screen.fill((0, 0, 0))  # Clear screen with black
         current_scene = self.scene_manager.get_current_scene()
-        self.scene_manager.render(self.screen)
-        pygame.display.flip()
+        if current_scene:
+            current_scene.render(self.screen)
+            pygame.display.update(current_scene.get_dirty_rects())
+        else:
+            pygame.display.flip() # Fallback if no scene is set
 
     def run(self):
         """Main game loop"""

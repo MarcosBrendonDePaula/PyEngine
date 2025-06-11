@@ -136,7 +136,7 @@ class Entity:
             if component.enabled:
                 component.tick()
 
-    def render(self, screen: pygame.Surface, camera_offset: Tuple[float, float] = (0, 0)) -> None:
+    def render(self, screen: pygame.Surface, camera_offset: Tuple[float, float] = (0, 0)) -> List[pygame.Rect]:
         """
         Render method to be called each frame for drawing
         
@@ -145,12 +145,16 @@ class Entity:
             camera_offset (Tuple[float, float]): The camera offset to apply
         """
         if not self.visible:
-            return
+            return []
 
+        rendered_rects = []
         # Render all components
         for component in self.components.values():
             if component.enabled:
-                component.render(screen, camera_offset)
+                rect = component.render(screen, camera_offset)
+                if rect:
+                    rendered_rects.append(rect)
+        return rendered_rects
 
     def handle_event(self, event: pygame.event.Event) -> None:
         """
