@@ -19,7 +19,7 @@ class MenuItem:
 
 class MenuButton(Button):
     """Button for menu items"""
-    def __init__(self, x: int, y: int, width: int, height: int, 
+    def __init__(self, x: int, y: int, width: int, height: int,
                  text: str, has_submenu: bool = False):
         super().__init__(x, y, width, height, text)
         self.has_submenu = has_submenu
@@ -27,6 +27,20 @@ class MenuButton(Button):
         self.text_color = (0, 0, 0)
         self.arrow_color = (100, 100, 100)
         self.padding = 10
+
+        # Hover callback used by menus to open submenus
+        self.on_hover: Optional[Callable[[], None]] = None
+
+
+    def handle_event(self, event: pygame.event.Event) -> bool:
+        """Handle events and trigger hover callbacks"""
+        was_hovered = self.hovered
+        handled = super().handle_event(event)
+
+        if event.type == pygame.MOUSEMOTION:
+            if self.hovered and not was_hovered and self.on_hover:
+                self.on_hover()
+        return handled
     
     def render(self, screen: pygame.Surface):
         """Render menu button with submenu arrow if needed"""
