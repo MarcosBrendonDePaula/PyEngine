@@ -15,6 +15,7 @@ A high-performance 2D game engine built with Python and Pygame, featuring multi-
 - Smooth scene transitions
 - Resource loading management
 - Persistent data between scenes
+- Viewport culling to skip processing off-screen entities
 
 ### Entity-Component System
 - Flexible component-based architecture
@@ -97,38 +98,38 @@ class Player(Entity):
         # Add physics for movement
         self.physics = self.add_component(Physics(mass=1.0, gravity=0, friction=0.8))
         self.physics.restitution = 0.5  # Add bounce
-        
+
         # Add collision
         self.collider = self.add_component(Collider(40, 40))
-        
+
         # Setup player properties
         self.controls = controls
         self.speed = 8.0
         self.health = 100
         self.player_num = player_num
-        
+
     def tick(self):
         super().tick()
         # Handle movement based on controls
         keys = pygame.key.get_pressed()
         dx = dy = 0
-        
+
         if keys[self.controls['left']]: dx -= self.speed
         if keys[self.controls['right']]: dx += self.speed
         if keys[self.controls['up']]: dy -= self.speed
         if keys[self.controls['down']]: dy += self.speed
-            
+
         self.physics.set_velocity(dx, dy)
 
 class MultiplayerScene(BaseScene):
     def __init__(self):
         super().__init__()
-        
+
         # Add logging system
         logger_entity = Entity(10, 10)
         self.logger = logger_entity.add_component(LogComponent(max_messages=5))
         self.add_entity(logger_entity, "ui")
-        
+
         # Create Player 1 (Blue, WASD controls)
         self.player1 = Player(200, 300, (0, 0, 255), {
             'up': pygame.K_w,
@@ -138,7 +139,7 @@ class MultiplayerScene(BaseScene):
             'attack': pygame.K_SPACE
         }, 1)
         self.add_entity(self.player1, "players")
-        
+
         # Create Player 2 (Green, Arrow controls)
         self.player2 = Player(600, 300, (0, 255, 0), {
             'up': pygame.K_UP,
@@ -148,7 +149,7 @@ class MultiplayerScene(BaseScene):
             'attack': pygame.K_RETURN
         }, 2)
         self.add_entity(self.player2, "players")
-        
+
         self.logger.log("Game Started!", "info", 3.0)
 
 def main():
@@ -176,17 +177,17 @@ class Player(Entity):
             friction=0.3
         ))
         self.physics.restitution = 0.0  # No bounce
-        
+
         # Collision
         self.collider = self.add_component(RectCollider(40, 40))
-        
+
         # Player light
         self.light = self.add_component(LightComponent(
             color=(255, 220, 150),  # Warm light
             intensity=1.2,
             radius=200
         ))
-    
+
     def jump(self):
         if self.physics.is_grounded:
             self.physics.apply_impulse(0, -12.0)
@@ -197,7 +198,7 @@ class Platform(Entity):
         # Static physics
         self.physics = self.add_component(Physics())
         self.physics.set_kinematic(True)
-        
+
         # Collision
         self.collider = self.add_component(RectCollider(width, height))
 
@@ -207,10 +208,10 @@ class PlatformerScene(BaseScene):
         # Create player
         self.player = Player(400, 300)
         self.add_entity(self.player, "player")
-        
+
         # Create platforms
         self._create_platforms()
-        
+
         # Add ambient light
         ambient = Entity(400, 300)
         ambient.add_component(LightComponent(
@@ -219,7 +220,7 @@ class PlatformerScene(BaseScene):
             radius=800
         ))
         self.add_entity(ambient, "lights")
-    
+
     def _create_platforms(self):
         # Ground
         self.add_entity(Platform(400, 550, 800, 40), "platforms")
@@ -251,7 +252,7 @@ class PuzzlePiece(Entity):
             gravity=0,
             friction=0.8
         ))
-        
+
         # Add shape-specific collider
         if shape_type == "circle":
             self.collider = self.add_component(CircleCollider(size))
@@ -264,7 +265,7 @@ class PuzzlePiece(Entity):
             self.collider = self.add_component(PolygonCollider(points))
         elif shape_type == "star":
             self.collider = self.add_component(PolygonCollider(self._create_star_points(size)))
-    
+
     def _create_star_points(self, size):
         points = []
         for i in range(10):
@@ -280,7 +281,7 @@ class PuzzleScene(BaseScene):
         super().__init__()
         # Create puzzle pieces
         self._create_puzzle_pieces()
-    
+
     def _
 
 create_puzzle_pieces(self):
