@@ -1,7 +1,6 @@
 import unittest
 from unittest.mock import MagicMock, patch
 import pygame
-import os
 
 # Mock pygame for testing purposes
 pygame.init = MagicMock()
@@ -16,7 +15,49 @@ pygame.display.flip = MagicMock()
 
 # Mock pygame.Rect to return a mock object with expected attributes
 # Ensure x, y, w, h are set correctly for tests that check them
-pygame.Rect = MagicMock(side_effect=lambda x, y, w, h: MagicMock(x=x, y=y, w=w, h=h, colliderect=MagicMock(return_value=True)))
+class MockRect(MagicMock):
+    def __init__(self, x=0, y=0, w=0, h=0, **kwargs):
+        super().__init__(**kwargs)
+        self._x = x
+        self._y = y
+        self.w = w
+        self.h = h
+        self.colliderect = MagicMock(return_value=True)
+
+    def copy(self):
+        # Return a new MockRect with the same dimensions
+        return MockRect(self._x, self._y, self.w, self.h)
+
+    @property
+    def x(self):
+        return self._x
+    @x.setter
+    def x(self, value):
+        self._x = value
+
+    @property
+    def y(self):
+        return self._y
+    @y.setter
+    def y(self, value):
+        self._y = value
+
+    @property
+    def topleft(self):
+        return (self._x, self._y)
+    @topleft.setter
+    def topleft(self, value):
+        self._x = value[0]
+        self._y = value[1]
+
+    @property
+    def width(self):
+        return self.w
+    @property
+    def height(self):
+        return self.h
+
+pygame.Rect = MockRect # Assign our custom mock class to pygame.Rect
 
 # Mock pygame.image.load
 pygame.image = MagicMock()
@@ -37,8 +78,9 @@ class MockSurface(MagicMock):
         return MockSurface()
     def convert_alpha(self):
         return MockSurface()
-    # Make get_rect a MagicMock from the start
-    get_rect = MagicMock()
+    def get_rect(self):
+        # Return an instance of our MockRect
+        return MockRect(x=0, y=0, w=0, h=0) 
 
 pygame.Surface = MockSurface # Assign our custom mock class to pygame.Surface
 
@@ -57,8 +99,8 @@ class TestRenderSystem(unittest.TestCase):
 
     def setUp(self):
         self.mock_screen = MockSurface() # Use our custom mock surface
-        # Now get_rect is a MagicMock, so we can set its return_value
-        self.mock_screen.get_rect.return_value = MagicMock(x=0, y=0, w=800, h=600, colliderect=MagicMock(return_value=True))
+        # Now get_rect is a method that returns a MockRect, so we can set its return_value
+        self.mock_screen.get_rect.return_value = MockRect(x=0, y=0, w=800, h=600, colliderect=MagicMock(return_value=True))
         
         # Reset pygame.display.update mock before each test
         pygame.display.update.reset_mock()
@@ -66,9 +108,9 @@ class TestRenderSystem(unittest.TestCase):
     def test_base_scene_dirty_rects_management(self):
         scene = BaseScene()
         
-        rect1 = MagicMock(spec=pygame.Rect)
-        rect2 = MagicMock(spec=pygame.Rect)
-        rect3 = MagicMock(spec=pygame.Rect)
+        rect1 = MockRect() # Use MockRect directly
+        rect2 = MockRect() # Use MockRect directly
+        rect3 = MockRect() # Use MockRect directly
 
         scene.add_dirty_rect(rect1)
         self.assertEqual(scene.get_dirty_rects(), [rect1])
@@ -77,12 +119,12 @@ class TestRenderSystem(unittest.TestCase):
         self.assertEqual(scene.get_dirty_rects(), [rect1, rect2])
 
         scene.clear_dirty_rects()
-        self.assertEqual(scene.get_dirty_rects(), [rect1, rect2]) # Previous frame's dirty rects are still there
+        self.assertEqual(scene.get_dirty_rects(), [rect1, rect2]) # Previous frame\"s dirty rects are still there
         scene.add_dirty_rect(rect3)
         self.assertEqual(scene.get_dirty_rects(), [rect1, rect2, rect3])
 
         scene.clear_dirty_rects()
-        self.assertEqual(scene.get_dirty_rects(), [rect3]) # Only current frame's dirty rects are cleared
+        self.assertEqual(scene.get_dirty_rects(), [rect3]) # Only current frame\"s dirty rects are cleared
 
     @patch.object(BaseScene, 'render')
     def test_interface_calls_display_update_with_dirty_rects(self, mock_scene_render):
@@ -91,8 +133,8 @@ class TestRenderSystem(unittest.TestCase):
         interface.set_scene("test_scene", scene)
 
         # Simulate scene rendering returning dirty rects
-        mock_rect1 = MagicMock(spec=pygame.Rect)
-        mock_rect2 = MagicMock(spec=pygame.Rect)
+        mock_rect1 = MockRect() # Use MockRect directly
+        mock_rect2 = MockRect() # Use MockRect directly
         scene.add_dirty_rect(mock_rect1)
         scene.add_dirty_rect(mock_rect2)
 
@@ -109,7 +151,7 @@ class TestRenderSystem(unittest.TestCase):
         rendered_rects = entity.render(self.mock_screen)
         self.assertIsInstance(rendered_rects, list)
         self.assertEqual(len(rendered_rects), 1)
-        self.assertIsInstance(rendered_rects[0], MagicMock) # Mocked pygame.Rect
+        self.assertIsInstance(rendered_rects[0], MockRect) # Check for MockRect
 
     def test_rectangle_renderer_render_returns_rect(self):
         entity = Entity(0, 0)
@@ -117,7 +159,7 @@ class TestRenderSystem(unittest.TestCase):
         renderer.attach(entity)
 
         returned_rect = renderer.render(self.mock_screen)
-        self.assertIsInstance(returned_rect, MagicMock) # Mocked pygame.Rect
+        self.assertIsInstance(returned_rect, MockRect) # Mocked pygame.Rect
         self.assertEqual(returned_rect.x, -5)
         self.assertEqual(returned_rect.y, -5)
         self.assertEqual(returned_rect.w, 10)
@@ -127,12 +169,13 @@ class TestRenderSystem(unittest.TestCase):
         sprite = Sprite(0, 0)
         # Mock image and rect for the sprite
         mock_image = MockSurface() # Use our custom mock surface
-        mock_image.get_rect.return_value = MagicMock(x=0, y=0, w=50, h=50, center=(0,0))
+        mock_image.get_rect.return_value = MockRect(w=50, h=50) # Initial position doesn\'t matter for get_rect
         sprite.image = mock_image
         sprite.rect = mock_image.get_rect()
+        sprite.position = pygame.math.Vector2(0, 0) # Ensure sprite position is (0,0)
 
         returned_rect = sprite.render(self.mock_screen)
-        self.assertIsInstance(returned_rect, MagicMock) # Mocked pygame.Rect
+        self.assertIsInstance(returned_rect, MockRect) # Mocked pygame.Rect
         self.assertEqual(returned_rect.x, -25)
         self.assertEqual(returned_rect.y, -25)
         self.assertEqual(returned_rect.w, 50)
