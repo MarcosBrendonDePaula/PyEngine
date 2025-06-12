@@ -79,7 +79,7 @@ class DirectionalLight(Component):
         
         return closest_point
     
-    def render(self, screen: pygame.Surface, camera_offset: Tuple[float, float] = (0, 0)):
+    def render(self, screen: pygame.Surface, camera_offset: Tuple[float, float] = (0, 0)) -> List[pygame.Rect]:
         if not self.enabled or not self.entity:
             return
         
@@ -135,19 +135,25 @@ class DirectionalLight(Component):
                 pygame.draw.polygon(light_surface, (*self.color, alpha), scaled_points)
         
         # Apply lighting
-        screen.blit(light_surface, (0, 0))
+        light_rect = light_surface.get_rect(topleft=(0, 0))
+        screen.blit(light_surface, (light_rect.x + camera_offset[0], light_rect.y + camera_offset[1]))
+        
+        dirty_rects = [light_rect.move(camera_offset[0], camera_offset[1])]
         
         # Draw light center indicator
-        pygame.draw.circle(screen, (0, 0, 0), center, 8)
-        pygame.draw.circle(screen, self.color, center, 6)
+        center_on_screen = (center[0] + camera_offset[0], center[1] + camera_offset[1])
+        dirty_rects.append(pygame.draw.circle(screen, (0, 0, 0), center_on_screen, 8))
+        dirty_rects.append(pygame.draw.circle(screen, self.color, center_on_screen, 6))
         
         # Draw direction indicator
-        end_point = (
-            center[0] + light_dir.x * 20,
-            center[1] + light_dir.y * 20
+        end_point_on_screen = (
+            center[0] + light_dir.x * 20 + camera_offset[0],
+            center[1] + light_dir.y * 20 + camera_offset[1]
         )
-        pygame.draw.line(screen, (0, 0, 0), center, end_point, 4)
-        pygame.draw.line(screen, self.color, center, end_point, 2)
+        dirty_rects.append(pygame.draw.line(screen, (0, 0, 0), center_on_screen, end_point_on_screen, 4))
+        dirty_rects.append(pygame.draw.line(screen, self.color, center_on_screen, end_point_on_screen, 2))
+        
+        return dirty_rects
     
     def update_colliders(self, colliders: List[Collider]):
         """Update the list of colliders that can block light"""
