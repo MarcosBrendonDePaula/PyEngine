@@ -140,3 +140,13 @@ __all__.extend([
     'TimerComponent'
 ])
 
+
+
+from .core.components.health_component import HealthComponent
+from .core.components.inventory_component import InventoryComponent
+
+__all__.extend([
+    'HealthComponent',
+    'InventoryComponent'
+])
+

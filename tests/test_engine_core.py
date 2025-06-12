@@ -7,6 +7,8 @@ from engine.core.component import Component
 from engine.core.input import Input
 from engine.core.components.state_machine_component import StateMachineComponent
 from engine.core.components.timer_component import TimerComponent
+from engine.core.components.health_component import HealthComponent
+from engine.core.components.inventory_component import InventoryComponent
 
 class TestEntity(unittest.TestCase):
     def setUp(self):
@@ -220,4 +222,123 @@ class TestTimerComponent(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+
+class TestHealthComponent(unittest.TestCase):
+    def setUp(self):
+        self.entity = Mock()
+        self.health_component = HealthComponent(max_health=100)
+        self.health_component.attach(self.entity)
+
+    def test_initial_health(self):
+        self.assertEqual(self.health_component.max_health, 100)
+        self.assertEqual(self.health_component.current_health, 100)
+
+    def test_take_damage(self):
+        self.health_component.take_damage(20)
+        self.assertEqual(self.health_component.current_health, 80)
+        self.health_component.take_damage(90) # Overkill
+        self.assertEqual(self.health_component.current_health, 0)
+
+    def test_heal(self):
+        self.health_component.current_health = 50
+        self.health_component.heal(30)
+        self.assertEqual(self.health_component.current_health, 80)
+        self.health_component.heal(100) # Overheal
+        self.assertEqual(self.health_component.current_health, 100)
+
+    def test_is_dead(self):
+        self.health_component.current_health = 10
+        self.assertFalse(self.health_component.is_dead())
+        self.health_component.take_damage(10)
+        self.assertTrue(self.health_component.is_dead())
+
+    def test_on_health_changed_callback(self):
+        mock_callback = Mock()
+        self.health_component.on_health_changed(mock_callback)
+        self.health_component.take_damage(20)
+        mock_callback.assert_called_once_with(80, 100)
+
+    def test_on_death_callback(self):
+        mock_callback = Mock()
+        self.health_component.on_death(mock_callback)
+        self.health_component.take_damage(100)
+        mock_callback.assert_called_once()
+
+    def test_set_max_health(self):
+        self.health_component.current_health = 50
+        self.health_component.max_health = 70
+        self.assertEqual(self.health_component.max_health, 70)
+        self.assertEqual(self.health_component.current_health, 50)
+        
+        self.health_component.max_health = 40
+        self.assertEqual(self.health_component.max_health, 40)
+        self.assertEqual(self.health_component.current_health, 40)
+
+class TestInventoryComponent(unittest.TestCase):
+    def setUp(self):
+        self.entity = Mock()
+        self.inventory_component = InventoryComponent(capacity=3)
+        self.inventory_component.attach(self.entity)
+
+    def test_add_item(self):
+        self.assertTrue(self.inventory_component.add_item("sword"))
+        self.assertEqual(self.inventory_component.get_item_count(), 1)
+        self.assertTrue(self.inventory_component.has_item("sword"))
+
+    def test_add_item_full_inventory(self):
+        self.inventory_component.add_item("item1")
+        self.inventory_component.add_item("item2")
+        self.inventory_component.add_item("item3")
+        self.assertFalse(self.inventory_component.add_item("item4"))
+        self.assertEqual(self.inventory_component.get_item_count(), 3)
+
+    def test_remove_item(self):
+        self.inventory_component.add_item("sword")
+        self.assertTrue(self.inventory_component.remove_item("sword"))
+        self.assertEqual(self.inventory_component.get_item_count(), 0)
+        self.assertFalse(self.inventory_component.has_item("sword"))
+
+    def test_remove_non_existent_item(self):
+        self.assertFalse(self.inventory_component.remove_item("axe"))
+
+    def test_has_item(self):
+        self.inventory_component.add_item("potion")
+        self.assertTrue(self.inventory_component.has_item("potion"))
+        self.assertFalse(self.inventory_component.has_item("gold"))
+
+    def test_get_items(self):
+        self.inventory_component.add_item("itemA")
+        self.inventory_component.add_item("itemB")
+        items = self.inventory_component.get_items()
+        self.assertEqual(items, ["itemA", "itemB"])
+        # Ensure it's a copy
+        items.append("itemC")
+        self.assertEqual(self.inventory_component.get_item_count(), 2)
+
+    def test_unlimited_capacity(self):
+        unlimited_inventory = InventoryComponent()
+        unlimited_inventory.attach(self.entity)
+        for i in range(100):
+            self.assertTrue(unlimited_inventory.add_item(f"item{i}"))
+        self.assertEqual(unlimited_inventory.get_item_count(), 100)
+
+    def test_is_full_and_empty(self):
+        self.assertTrue(self.inventory_component.is_empty())
+        self.assertFalse(self.inventory_component.is_full())
+        self.inventory_component.add_item("item1")
+        self.inventory_component.add_item("item2")
+        self.inventory_component.add_item("item3")
+        self.assertTrue(self.inventory_component.is_full())
+        self.assertFalse(self.inventory_component.is_empty())
+
+    def test_capacity_setter_reduces_items(self):
+        self.inventory_component.add_item("item1")
+        self.inventory_component.add_item("item2")
+        self.inventory_component.add_item("item3")
+        self.inventory_component.capacity = 2
+        self.assertEqual(self.inventory_component.get_item_count(), 2)
+        self.assertEqual(self.inventory_component.get_items(), ["item1", "item2"])
+
 
