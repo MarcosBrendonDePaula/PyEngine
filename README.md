@@ -68,7 +68,7 @@ Para um guia rápido em português de como criar um jogo simples, consulte
 ## User Interface System
 
 ### Basic Controls
-- Labels, Buttons, ProgressBar, Slider, Toggle, Input, MultilineInput
+- Labels, Buttons, ProgressBar, CircularProgress, Slider, Toggle, Checkbox, Input, MultilineInput
 
 ### Layout Components
 - Panel, TitledPanel, Grid, ScrollView, Tabs
