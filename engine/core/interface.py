@@ -92,7 +92,8 @@ class Interface:
             self.handle_events()
             self.update()
             self.render()
-            self.clock.tick(self.fps)
+            delta_time = self.clock.tick(self.fps) / 1000.0  # Convert milliseconds to seconds
+            self.scene_manager.update(delta_time)
 
         # Cleanup
         print("Cleaning up")

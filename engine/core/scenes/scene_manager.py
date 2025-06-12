@@ -104,10 +104,10 @@ class SceneManager:
         if self._current_scene and hasattr(self._current_scene, 'handle_event'):
             self._current_scene.handle_event(event)
 
-    def update(self) -> None:
+    def update(self, delta_time: float) -> None:
         """Update the current scene"""
         if self._current_scene and hasattr(self._current_scene, 'update'):
-            self._current_scene.update()
+            self._current_scene.update(delta_time)
 
     def render(self, screen: pygame.Surface) -> None:
         """Render the current scene"""

@@ -16,6 +16,7 @@ class BaseScene:
         self.camera = None  # Will be initialized when interface is set
         self.resource_loader = ResourceLoader()  # Get the singleton instance
         self.collision_system = CollisionSystem()  # Initialize collision system
+        self.delta_time: float = 0.0  # Initialize delta_time
         
     def initialize(self):
         """Initialize scene resources. Called once when scene is added to manager."""
@@ -82,7 +83,7 @@ class BaseScene:
             if entity.active:
                 entity.handle_event(event)
 
-    def update(self):
+    def update(self, delta_time: float):
         """Update all entities in the scene"""
         if not self._is_loaded:
             # If resources aren't loaded, update loading progress
@@ -90,6 +91,7 @@ class BaseScene:
                 self.load_resources()
             return
 
+        self.delta_time = delta_time
         # Update camera first
         if self.camera:
             self.camera.update()
@@ -172,3 +174,5 @@ class BaseScene:
         self._is_loaded = False
         self._loading_progress = 0
         self.collision_system.clear()  # Clear collision system
+
+
