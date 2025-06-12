@@ -1,6 +1,6 @@
 import pygame
 from engine.core.scenes.scene_manager import SceneManager
-from scenes.sprite_animation_demo import SpriteAnimationDemo
+from .sprite_animation_demo import SpriteAnimationDemo
 
 def main():
     pygame.init()

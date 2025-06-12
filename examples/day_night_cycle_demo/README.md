@@ -1,0 +1,18 @@
+# Day/Night Cycle Demo
+
+This example demonstrates a simple day/night cycle effect using lighting and color changes.
+
+## How to Run
+
+From the `PyEngine` root directory, run:
+
+```bash
+python3 examples/day_night_cycle_demo/day_night_cycle_demo.py
+```
+
+## Features
+
+- Smooth transition between day and night.
+- Visual representation of time progression.
+
+

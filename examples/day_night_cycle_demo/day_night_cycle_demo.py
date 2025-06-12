@@ -1,6 +1,6 @@
 import pygame
 from engine.core.scenes.scene_manager import SceneManager
-from scenes.day_night_cycle_scene import DayNightCycleScene
+from .day_night_cycle_scene import DayNightCycleScene
 
 def main():
     pygame.init()

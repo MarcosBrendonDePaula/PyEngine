@@ -6,7 +6,7 @@ from engine.core.components.physics import Physics
 from engine.core.components.collider import Collider
 from engine.core.components.log_component import LogComponent
 from engine.core.components.ui.progress_bar import ProgressBar
-import pygame
+from engine.core.components.ui.modal import MessageBox
 
 class Player(Entity):
     def __init__(self, x: float, y: float, color: tuple, controls: dict, player_num: int):
