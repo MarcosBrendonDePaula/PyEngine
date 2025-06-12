@@ -72,8 +72,8 @@ class StateTimerDemoScene(BaseScene):
                 if sm_component.get_current_state() == "walking":
                     sm_component.change_state("idle")
 
-    def update(self):
-        super().update()
+    def update(self, delta_time: float):
+        super().update(delta_time)
         # The tick method of components is called automatically by the entity's update method
 
     def render(self, screen):

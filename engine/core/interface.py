@@ -74,9 +74,10 @@ class Interface:
             else:
                 self.scene_manager.handle_event(event)
 
-    def update(self):
+    def update(self, delta_time: float):
         """Update the current scene"""
-        self.scene_manager.update()
+        # The scene manager update is now called directly from run() with delta_time
+        pass
 
     def render(self):
         """Render the current scene"""
@@ -90,7 +91,7 @@ class Interface:
         print("Starting game loop")
         while self.running:
             self.handle_events()
-            self.update()
+
             self.render()
             delta_time = self.clock.tick(self.fps) / 1000.0  # Convert milliseconds to seconds
             self.scene_manager.update(delta_time)
