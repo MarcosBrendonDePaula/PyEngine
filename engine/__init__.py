@@ -130,3 +130,13 @@ __all__ = [
     'ScrollView',
     'TitledPanel'
 ]
+
+
+from .core.components.state_machine_component import StateMachineComponent
+from .core.components.timer_component import TimerComponent
+
+__all__.extend([
+    'StateMachineComponent',
+    'TimerComponent'
+])
+
