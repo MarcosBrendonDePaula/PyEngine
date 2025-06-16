@@ -1,50 +1,26 @@
-import pygame
-import sys
-from engine.core.scenes.scene_manager import SceneManager
-from .scenes.light_demo_scene import LightDemoScene
+import multiprocessing as mp
+from engine import create_engine
+from scenes.light_demo_scene import LightDemoScene
 
 def main():
-    # Initialize Pygame
-    pygame.init()
+    # Get CPU cores for processing
+    cpu_count = mp.cpu_count()
+    num_threads = max(1, int(cpu_count * 0.75))
     
-    # Create window
-    screen = pygame.display.set_mode((800, 600))
-    pygame.display.set_caption("Lighting Demo")
+    # Create engine
+    engine = create_engine(
+        title="Lighting Demo",
+        width=800,
+        height=600,
+        num_threads=num_threads
+    )
     
-    # Create and set up scene manager
-    scene_manager = SceneManager()
+    # Create and set scene
+    scene = LightDemoScene()
+    engine.set_scene("light_demo", scene)
     
-    # Add and set the scene
-    scene_manager.add_scene("light_demo", LightDemoScene())
-    scene_manager.set_scene("light_demo", transition=False)
-    
-    # Game loop
-    clock = pygame.time.Clock()
-    running = True
-    
-    while running:
-        # Handle events
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
-            elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-                running = False
-            else:
-                scene_manager.handle_event(event)
-        
-        # Update
-        scene_manager.update()
-        
-        # Render
-        screen.fill((0, 0, 0))
-        scene_manager.render(screen)
-        pygame.display.flip()
-        
-        # Cap at 60 FPS
-        clock.tick(60)
-    
-    pygame.quit()
-    sys.exit()
+    # Run game
+    engine.run()
 
 if __name__ == "__main__":
     main()

@@ -1,6 +1,6 @@
 import multiprocessing as mp
 from engine import create_engine
-from .scenes.puzzle_scene import PuzzleScene
+from scenes.puzzle_scene import PuzzleScene
 
 
 def main():

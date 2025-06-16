@@ -1,47 +1,26 @@
-import pygame
-from engine.core.scenes.scene_manager import SceneManager
-from .scenes.sprite_animation_demo import SpriteAnimationDemo
+import multiprocessing as mp
+from engine import create_engine
+from scenes.sprite_animation_demo import SpriteAnimationDemo
 
 def main():
-    pygame.init()
-    screen = pygame.display.set_mode((800, 600))
-    pygame.display.set_caption("Sprite Animation Demo")
+    # Get CPU cores for processing
+    cpu_count = mp.cpu_count()
+    num_threads = max(1, int(cpu_count * 0.75))
     
-    # Create interface mock for the scene manager
-    class Interface:
-        def __init__(self, screen):
-            self.screen = screen
-            self.size = screen.get_size()
+    # Create engine
+    engine = create_engine(
+        title="Sprite Animation Demo",
+        width=800,
+        height=600,
+        num_threads=num_threads
+    )
     
-    interface = Interface(screen)
+    # Create and set scene
+    scene = SpriteAnimationDemo()
+    engine.set_scene("sprite_demo", scene)
     
-    scene_manager = SceneManager()
-    scene_manager.set_interface(interface)
-    scene_manager.add_scene("sprite_demo", SpriteAnimationDemo())
-    scene_manager.set_scene("sprite_demo", transition=False)
-    
-    clock = pygame.time.Clock()
-    running = True
-    
-    while running:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
-            scene_manager.handle_event(event)
-        
-        clock.tick(60)  # Maintain 60 FPS
-        
-        # Clear screen
-        screen.fill((0, 0, 0))
-        
-        # Update and render
-        scene_manager.update()
-        scene_manager.render(screen)
-        
-        pygame.display.flip()
-    
-    scene_manager.cleanup()
-    pygame.quit()
+    # Run game
+    engine.run()
 
 if __name__ == "__main__":
     main()

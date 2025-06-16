@@ -91,7 +91,6 @@ class Interface:
         print("Starting game loop")
         while self.running:
             self.handle_events()
-
             self.render()
             delta_time = self.clock.tick(self.fps) / 1000.0  # Convert milliseconds to seconds
             self.scene_manager.update(delta_time)
