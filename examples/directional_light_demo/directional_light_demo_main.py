@@ -1,6 +1,6 @@
 import multiprocessing as mp
 from engine import create_engine
-from .directional_light_demo import DirectionalLightDemo
+from .scenes.directional_light_scene import DirectionalLightDemo
 
 def main():
     # Get the number of CPU cores

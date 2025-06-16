@@ -1,7 +1,7 @@
 import pygame
 import sys
 from engine.core.scenes.scene_manager import SceneManager
-from .light_demo_scene import LightDemoScene
+from .scenes.light_demo_scene import LightDemoScene
 
 def main():
     # Initialize Pygame

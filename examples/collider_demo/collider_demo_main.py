@@ -1,6 +1,6 @@
 import multiprocessing as mp
 from engine import create_engine
-from .collider_demo_scene import ColliderDemoScene
+from .scenes.collider_demo_scene import ColliderDemoScene
 
 def main():
     # Get the number of CPU cores

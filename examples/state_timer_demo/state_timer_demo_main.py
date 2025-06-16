@@ -1,6 +1,6 @@
 import multiprocessing as mp
 from engine import create_engine
-from .state_timer_demo_scene import StateTimerDemoScene
+from .scenes.state_timer_demo_scene import StateTimerDemoScene
 
 def main():
     cpu_count = mp.cpu_count()

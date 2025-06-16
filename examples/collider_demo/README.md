@@ -8,7 +8,7 @@ Install the engine first with:
 
 ```bash
 pip install -e .
-=======
+# or
 pip install pyengine
 ```
 

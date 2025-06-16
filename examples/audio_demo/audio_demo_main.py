@@ -1,7 +1,7 @@
 import pygame
 import sys
 from engine.core.scenes.scene_manager import SceneManager
-from .audio_demo_scene import AudioDemoScene
+from .scenes.audio_demo_scene import AudioDemoScene
 
 def main():
     # Initialize Pygame

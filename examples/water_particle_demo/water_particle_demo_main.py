@@ -1,7 +1,7 @@
 import pygame
 from engine.core.interface import Interface
 from engine.core.scenes.scene_manager import SceneManager
-from .water_particle_scene import WaterParticleScene
+from .scenes.water_particle_scene import WaterParticleScene
 
 
 def main():

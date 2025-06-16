@@ -9,7 +9,7 @@ Install the engine with:
 
 ```bash
 pip install -e .
-=======
+# or
 pip install pyengine
 ```
 
