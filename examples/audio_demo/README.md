@@ -4,7 +4,13 @@ This example demonstrates the usage of the `AudioSourceComponent` and `AudioList
 
 ## How to Run
 
-From the `PyEngine` root directory, run:
+Install the engine with:
+
+```bash
+pip install -e .
+```
+
+Then run:
 
 ```bash
 python3 examples/audio_demo/audio_demo_main.py

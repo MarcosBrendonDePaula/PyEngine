@@ -4,7 +4,13 @@ This example demonstrates different collider types (Circle, Polygon) and their c
 
 ## How to Run
 
-From the `PyEngine` root directory, run:
+Install the engine first with:
+
+```bash
+pip install -e .
+```
+
+Then from the repository root run:
 
 ```bash
 python3 examples/collider_demo/collider_demo_main.py

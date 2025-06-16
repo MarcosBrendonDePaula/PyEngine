@@ -4,7 +4,13 @@ This example demonstrates various UI components available in PyEngine, such as b
 
 ## How to Run
 
-From the `PyEngine` root directory, run:
+Install the engine with:
+
+```bash
+pip install -e .
+```
+
+Then run:
 
 ```bash
 python3 examples/ui_demo/ui_demo.py

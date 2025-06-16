@@ -4,7 +4,13 @@ This example demonstrates a simple local multiplayer game with two players, coll
 
 ## How to Run
 
-From the `PyEngine` root directory, run:
+Install the engine with:
+
+```bash
+pip install -e .
+```
+
+Then run:
 
 ```bash
 python3 examples/local_multiplayer_game/Local_Multiplayer_Game.py

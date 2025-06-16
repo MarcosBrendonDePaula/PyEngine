@@ -5,6 +5,16 @@ A high-performance 2D game engine built with Python and Pygame, featuring multi-
 Para um guia rápido em português de como criar um jogo simples, consulte
 [docs/CRIANDO_JOGOS_PT.md](docs/CRIANDO_JOGOS_PT.md).
 
+## Installation
+
+Install the engine in editable mode from the repository root:
+
+```bash
+pip install -e .
+```
+
+Once installed you can run the example scripts from anywhere.
+
 ## Core Features
 
 ### Multi-Core Processing

@@ -4,7 +4,13 @@ This example demonstrates the usage of the `StateMachineComponent` and `TimerCom
 
 ## How to Run
 
-From the `PyEngine` root directory, run:
+Install the engine with:
+
+```bash
+pip install -e .
+```
+
+Then run:
 
 ```bash
 python3 examples/state_timer_demo/state_timer_demo_main.py

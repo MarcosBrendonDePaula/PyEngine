@@ -4,7 +4,13 @@ This example demonstrates a simple day/night cycle effect using lighting and col
 
 ## How to Run
 
-From the `PyEngine` root directory, run:
+Install the engine with:
+
+```bash
+pip install -e .
+```
+
+Then run:
 
 ```bash
 python3 examples/day_night_cycle_demo/day_night_cycle_demo.py

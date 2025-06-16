@@ -4,7 +4,13 @@ This example demonstrates a simple puzzle game with draggable shapes and collisi
 
 ## How to Run
 
-From the `PyEngine` root directory, run:
+Install the engine with:
+
+```bash
+pip install -e .
+```
+
+Then run:
 
 ```bash
 python3 examples/puzlegame/puzlegame.py

@@ -4,7 +4,13 @@ This example demonstrates basic point lighting in a 2D scene.
 
 ## How to Run
 
-From the `PyEngine` root directory, run:
+Install the engine with:
+
+```bash
+pip install -e .
+```
+
+Then run:
 
 ```bash
 python3 examples/light_demo/light_demo_main.py
