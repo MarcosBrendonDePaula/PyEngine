@@ -3,25 +3,33 @@ import random
 from engine.core.scenes.base_scene import BaseScene
 from engine.core.entity import Entity
 from engine.core.components.particle_system import ParticleSystem
+from engine.core.components.debug_info import DebugInfoComponent
+
+class DebugInfo(Entity):
+    def __init__(self):
+        super().__init__(0, 0)
+        self.add_component(DebugInfoComponent())
 
 class WaterParticleScene(BaseScene):
     def __init__(self):
         super().__init__()
         self.background_color = (10, 10, 30)
         self.emitter = Entity(400, 50)
-        self.particle_system = self.emitter.add_component(ParticleSystem(max_particles=1000))
+        self.particle_system = self.emitter.add_component(ParticleSystem(max_particles=10000))
         self.add_entity(self.emitter)
         self.gravity = pygame.math.Vector2(0, 200)
-        self.spawn_rate = 10
-        self.spawn_spread = 120
+        self.spawn_rate = 20
+        self.spawn_spread = 24
+        self.add_entity(DebugInfo())
+
 
     def handle_event(self, event):
         super().handle_event(event)
         if event.type == pygame.MOUSEMOTION:
             self.emitter.position.x = event.pos[0]
 
-    def update(self):
-        super().update()
+    def update(self, delta):
+        super().update(delta)
         if not self._is_loaded:
             return
         dt = self.interface.clock.get_time() / 1000.0

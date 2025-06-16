@@ -3,6 +3,7 @@ import os
 from engine.core.scenes.base_scene import BaseScene
 from engine.core.entity import Entity
 from engine.core.components.sprite_animation import SpriteAnimation
+from engine.core.components.ui.label import Label
 
 class SpriteAnimationDemo(BaseScene):
     def __init__(self):
@@ -12,6 +13,8 @@ class SpriteAnimationDemo(BaseScene):
         self.current_speed = 1.0
         self.walking_left = False
         self.walking_right = False
+        self.instruction_labels = []
+        self.speed_label = None
         
     def on_animation_finish(self):
         """Callback when an animation finishes"""
@@ -68,13 +71,14 @@ class SpriteAnimationDemo(BaseScene):
                 ):
                     print("Added walk animation")
                 
-                # Add jump animation (third row: 3 frames of 150x500)
+                # Add jump animation (third row: 3 frames of 150x200)
+                # Fixed the frame_height from 500 to 200 to match the comment
                 if self.sprite_animation.create_animation_from_lane(
                     name="jump",
                     start_x=0,          # Start at beginning of third row
                     start_y=320,        # Third row (after 320 pixels)
                     frame_width=150,     # Each frame is 150 pixels wide
-                    frame_height=200,    # Each frame is 500 pixels high
+                    frame_height=200,    # Each frame is 200 pixels high
                     frame_count=3,       # 3 frames in this animation
                     frame_duration=0.2,
                     loop=True
@@ -89,11 +93,71 @@ class SpriteAnimationDemo(BaseScene):
                 self.add_entity(self.character)
         else:
             print(f"Error: Sprite sheet not found at {sprite_sheet_path}")
+            # Create a fallback colored rectangle for testing
+            self._create_fallback_character()
+        
+        # Create instruction labels
+        self._create_instruction_labels()
         
         # Mark scene as loaded
         self._is_loaded = True
         self._loading_progress = 100
         print("Resources loaded")
+    
+    def _create_fallback_character(self):
+        """Create a simple colored rectangle as fallback when sprite sheet is missing"""
+        print("Creating fallback character")
+        # Even without sprite sheet, we can still demonstrate the animation system
+        self.character = Entity()
+        self.character.position = pygame.math.Vector2(400, 300)
+        self.add_entity(self.character)
+    
+    def _create_instruction_labels(self):
+        """Create instruction labels using the engine's label system"""
+        instructions = [
+            "Press 1: Play Idle Animation (5 frames, 100x160)",
+            "Hold Left/Right: Walk Animation (5 frames, 100x160)",
+            "Press 3: Play Jump Animation (3 frames, 150x200)",
+            "Up/Down Arrows: Change Animation Speed"
+        ]
+        
+        # Clear existing labels
+        for label in self.instruction_labels:
+            self.add_entity(label)
+        self.instruction_labels.clear()
+        
+        # Remove existing speed label
+        if self.speed_label:
+            self.add_entity(self.speed_label)
+        
+        # Create instruction labels and add to scene
+        y_offset = 10
+        for instruction in instructions:
+            label = Label(
+                x=10,
+                y=y_offset,
+                text=instruction,
+                font_size=20
+            )
+            label.set_text_color((255, 255, 255))  # White text
+            self.instruction_labels.append(label)
+            self.add_entity(label)  # Add to scene
+            y_offset += 25
+        
+        # Create speed label and add to scene
+        self.speed_label = Label(
+            x=10,
+            y=y_offset,
+            text=f"Current Speed: {self.current_speed:.1f}x",
+            font_size=20
+        )
+        self.speed_label.set_text_color((255, 255, 0))  # Yellow for emphasis
+        self.add_entity(self.speed_label)  # Add to scene
+        
+    def _update_speed_display(self):
+        """Update the speed display label"""
+        if self.speed_label:
+            self.speed_label.set_text(f"Current Speed: {self.current_speed:.1f}x")
         
     def handle_event(self, event: pygame.event.Event):
         """Handle input to change animations"""
@@ -124,55 +188,49 @@ class SpriteAnimationDemo(BaseScene):
             elif event.key == pygame.K_UP:
                 self.current_speed = min(2.0, self.current_speed + 0.2)
                 print(f"Increasing animation speed: {self.current_speed:.1f}x")
-                for anim_name in self.sprite_animation.animations:
-                    self.sprite_animation.set_animation_speed(anim_name, self.current_speed)
+                if hasattr(self.sprite_animation, 'animations'):
+                    for anim_name in self.sprite_animation.animations:
+                        self.sprite_animation.set_animation_speed(anim_name, self.current_speed)
+                self._update_speed_display()
             elif event.key == pygame.K_DOWN:
                 self.current_speed = max(0.2, self.current_speed - 0.2)
                 print(f"Decreasing animation speed: {self.current_speed:.1f}x")
-                for anim_name in self.sprite_animation.animations:
-                    self.sprite_animation.set_animation_speed(anim_name, self.current_speed)
+                if hasattr(self.sprite_animation, 'animations'):
+                    for anim_name in self.sprite_animation.animations:
+                        self.sprite_animation.set_animation_speed(anim_name, self.current_speed)
+                self._update_speed_display()
         
         elif event.type == pygame.KEYUP:
             if event.key == pygame.K_LEFT and self.walking_left:
                 print("Stopped walking left")
                 self.walking_left = False
-                self.sprite_animation.play("idle")
+                if self.sprite_animation:
+                    self.sprite_animation.play("idle")
             elif event.key == pygame.K_RIGHT and self.walking_right:
                 print("Stopped walking right")
                 self.walking_right = False
-                self.sprite_animation.play("idle")
+                if self.sprite_animation:
+                    self.sprite_animation.play("idle")
     
-    def update(self):
+    def update(self, delta):
         """Update the scene"""
-        super().update()
+        super().update(delta)
         
         # Update character position based on walking state
-        if self.walking_left:
-            self.character.position.x -= 2
-        elif self.walking_right:
-            self.character.position.x += 2
+        if self.character and (self.walking_left or self.walking_right):
+            if self.walking_left:
+                self.character.position.x -= 100 * delta  # Speed based on delta time
+            elif self.walking_right:
+                self.character.position.x += 100 * delta  # Speed based on delta time
+            
+            # Keep character on screen
+            screen_width = 800  # Assuming screen width, adjust as needed
+            if self.character.position.x < 0:
+                self.character.position.x = 0
+            elif self.character.position.x > screen_width:
+                self.character.position.x = screen_width
     
     def render(self, screen: pygame.Surface):
         """Render the scene"""
-        # Fill background
-        screen.fill((50, 50, 50))
-        
-        # Render entities
+        # Render entities and UI elements
         super().render(screen)
-        
-        # Draw instructions
-        if pygame.font.get_init():
-            font = pygame.font.Font(None, 24)
-            instructions = [
-                "Press 1: Play Idle Animation (5 frames, 100x160)",
-                "Hold Left/Right: Walk Animation (5 frames, 100x160)",
-                "Press 3: Play Jump Animation (3 frames, 150x500)",
-                "Up/Down Arrows: Change Animation Speed",
-                f"Current Speed: {self.current_speed:.1f}x"
-            ]
-            
-            y = 10
-            for instruction in instructions:
-                text = font.render(instruction, True, (255, 255, 255))
-                screen.blit(text, (10, y))
-                y += 25

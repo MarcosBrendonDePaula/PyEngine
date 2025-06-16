@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pyengine"
+version = "0.1.0"
+description = "High-performance 2D game engine"
+readme = "README.md"
+authors = [{ name = "PyEngine Developers" }]
+license = { text = "MIT" }
+requires-python = ">=3.8"
+dependencies = [
+    "numpy==2.1.3",
+    "pygame==2.6.1"
+]
+
+[project.optional-dependencies]
+examples = []
+
+[tool.setuptools.packages.find]
+where = ["."]
+
+include = ["engine*", "scenes*"]
+
+[project.urls]
+Homepage = "https://example.com"
