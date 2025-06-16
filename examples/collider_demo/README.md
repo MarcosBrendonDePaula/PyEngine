@@ -7,6 +7,8 @@ This example demonstrates different collider types (Circle, Polygon) and their c
 Install the engine first with:
 
 ```bash
+pip install -e .
+=======
 pip install pyengine
 ```
 

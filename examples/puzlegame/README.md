@@ -7,6 +7,8 @@ This example demonstrates a simple puzzle game with draggable shapes and collisi
 Install the engine with:
 
 ```bash
+pip install -e .
+=======
 pip install pyengine
 ```
 

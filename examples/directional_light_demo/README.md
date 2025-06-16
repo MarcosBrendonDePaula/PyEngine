@@ -7,6 +7,8 @@ This example demonstrates the usage of directional lighting in a 2D scene.
 Install the engine with:
 
 ```bash
+pip install -e .
+=======
 pip install pyengine
 ```
 

@@ -8,6 +8,8 @@ First, ensure you have a network server running (e.g., `network_server.py`).
 Install the engine with:
 
 ```bash
+pip install -e .
+=======
 pip install pyengine
 ```
 

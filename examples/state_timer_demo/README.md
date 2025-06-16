@@ -7,6 +7,8 @@ This example demonstrates the usage of the `StateMachineComponent` and `TimerCom
 Install the engine with:
 
 ```bash
+pip install -e .
+=======
 pip install pyengine
 ```
 

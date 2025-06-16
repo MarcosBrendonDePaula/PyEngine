@@ -7,6 +7,8 @@ This example demonstrates a simple day/night cycle effect using lighting and col
 Install the engine with:
 
 ```bash
+pip install -e .
+=======
 pip install pyengine
 ```
 

@@ -7,6 +7,8 @@ This example demonstrates basic point lighting in a 2D scene.
 Install the engine with:
 
 ```bash
+pip install -e .
+=======
 pip install pyengine
 ```
 

@@ -7,6 +7,8 @@ This example demonstrates a basic network server that manages connections from m
 Install the engine with:
 
 ```bash
+pip install -e .
+=======
 pip install pyengine
 ```
 

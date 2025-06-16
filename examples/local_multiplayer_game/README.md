@@ -7,6 +7,8 @@ This example demonstrates a simple local multiplayer game with two players, coll
 Install the engine with:
 
 ```bash
+pip install -e .
+=======
 pip install pyengine
 ```
 
