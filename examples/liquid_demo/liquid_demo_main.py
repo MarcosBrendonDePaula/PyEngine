@@ -1,6 +1,6 @@
 import pygame
 from engine.core.scenes.scene_manager import SceneManager
-from .liquid_demo_scene import LiquidDemoScene
+from .scenes.liquid_demo_scene import LiquidDemoScene
 
 
 def main():

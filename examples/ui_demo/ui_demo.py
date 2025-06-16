@@ -2,7 +2,7 @@ import pygame
 import sys
 from engine.core.interface import Interface
 from engine.core.scenes.scene_manager import SceneManager
-from .ui_demo_scene import UIDemoScene
+from .scenes.ui_demo_scene import UIDemoScene
 
 def main():
     # Initialize Pygame

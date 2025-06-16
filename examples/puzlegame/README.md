@@ -8,14 +8,14 @@ Install the engine with:
 
 ```bash
 pip install -e .
-=======
+# or
 pip install pyengine
 ```
 
 Then run:
 
 ```bash
-python3 examples/puzlegame/puzlegame.py
+python3 examples/puzlegame/puzzle_main.py
 ```
 
 ## Controls

@@ -1,3 +1,4 @@
+import pygame
 from engine import create_engine
 from engine.core.scenes.base_scene import BaseScene
 from engine.core.entity import Entity
