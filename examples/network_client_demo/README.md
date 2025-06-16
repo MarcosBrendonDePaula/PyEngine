@@ -4,7 +4,14 @@ This example demonstrates a basic network client that connects to a server and s
 
 ## How to Run
 
-First, ensure you have a network server running (e.g., `network_server.py`). Then, from the `PyEngine` root directory, run:
+First, ensure you have a network server running (e.g., `network_server.py`).
+Install the engine with:
+
+```bash
+pip install pyengine
+```
+
+Then run:
 
 ```bash
 python3 examples/network_client_demo/network_client.py <player_id> [--host <host>] [--port <port>]

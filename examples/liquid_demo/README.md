@@ -4,7 +4,13 @@ This example demonstrates a simple liquid simulation.
 
 ## How to Run
 
-From the `PyEngine` root directory, run:
+Install the engine with:
+
+```bash
+pip install pyengine
+```
+
+Then run:
 
 ```bash
 python3 examples/liquid_demo/liquid_demo_main.py
