@@ -8,6 +8,8 @@ Install the engine with:
 
 ```bash
 pip install -e .
+=======
+pip install pyengine
 ```
 
 Then run:
