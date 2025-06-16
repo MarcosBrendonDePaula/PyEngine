@@ -1,3 +1,7 @@
+"""PyEngine public API."""
+
+__version__ = "0.1.0"
+
 from .core.interface import Interface
 from .core.entity import Entity
 from .core.sprite import Sprite
