@@ -7,7 +7,7 @@ This example demonstrates how to implement sprite animations.
 Install the engine with:
 
 ```bash
-pip install pyengine
+pip install -e .
 ```
 
 Then run:

@@ -7,7 +7,7 @@ This example demonstrates a simple liquid simulation.
 Install the engine with:
 
 ```bash
-pip install pyengine
+pip install -e .
 ```
 
 Then run:

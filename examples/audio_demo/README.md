@@ -7,7 +7,7 @@ This example demonstrates the usage of the `AudioSourceComponent` and `AudioList
 Install the engine with:
 
 ```bash
-pip install pyengine
+pip install -e .
 ```
 
 Then run:

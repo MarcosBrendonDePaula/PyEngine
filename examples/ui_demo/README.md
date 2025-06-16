@@ -7,7 +7,7 @@ This example demonstrates various UI components available in PyEngine, such as b
 Install the engine with:
 
 ```bash
-pip install pyengine
+pip install -e .
 ```
 
 Then run:
