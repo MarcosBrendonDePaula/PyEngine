@@ -17,6 +17,7 @@ class Physics(Component):
         self.is_grounded = False
         self._collider: Optional[Collider] = None
         self.restitution = 0.5  # Bounce factor for collisions
+        self.is_static = False
 
     def attach(self, entity):
         """Called when component is attached to entity"""
@@ -75,7 +76,7 @@ class Physics(Component):
             self.velocity.y = -self.velocity.y * self.restitution
 
     def tick(self):
-        if not self.enabled or not self.entity:
+        if not self.enabled or not self.entity or self.is_static:
             return
 
         if not self.is_kinematic:
@@ -132,3 +133,13 @@ class Physics(Component):
     def set_friction(self, friction: float):
         """Set the friction coefficient"""
         self.friction = max(0.0, min(1.0, friction))
+
+    def set_static(self, is_static: bool):
+        """
+        Marks the body as static (non-movable but collidable).
+        """
+        self.is_static = is_static
+        self.is_kinematic = False  # Static bodies are not kinematic
+        if is_static:
+            self.velocity = pygame.math.Vector2(0, 0)
+            self.forces = pygame.math.Vector2(0, 0)

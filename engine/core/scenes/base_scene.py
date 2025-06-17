@@ -1,11 +1,21 @@
 import pygame
-from typing import List, Dict, Optional, Any
+from typing import List, Dict, Optional, Any, NamedTuple
 from ..camera import Camera
 from ..resource_loader import ResourceLoader
 from .collision_system import CollisionSystem
+from ..components.collider import Collider
+
+class CollisionConfig(NamedTuple):
+    """Configuração do sistema de colisão"""
+    enabled: bool = True
+    use_spatial_partitioning: bool = True
+    grid_cell_size: float = 100.0
+    max_entities_for_bruteforce: int = 50  # Usa força bruta se tiver menos entidades
+    update_frequency: int = 1  # A cada quantos frames atualizar (1 = todo frame)
+    ui_cache_update_interval: int = 60  # Frames entre atualizações do cache UI
 
 class BaseScene:
-    def __init__(self, num_threads: int = None):
+    def __init__(self, num_threads: int = None, collision_config: CollisionConfig = None):
         self.entities = []
         self.entity_groups: Dict[str, List] = {}
         self.interface = None
@@ -15,9 +25,74 @@ class BaseScene:
         self._loading_progress = 0
         self.camera = None  # Will be initialized when interface is set
         self.resource_loader = ResourceLoader()  # Get the singleton instance
-        self.collision_system = CollisionSystem()  # Initialize collision system
         self.delta_time: float = 0.0  # Initialize delta_time
         
+        # Configuração do sistema de colisão
+        self._collision_config = collision_config or CollisionConfig()
+        self._collision_frame_counter = 0
+        
+        # Inicializar sistema de colisão com configurações
+        if self._collision_config.enabled:
+            self.collision_system = CollisionSystem(
+                use_spatial_partitioning=self._collision_config.use_spatial_partitioning,
+                grid_cell_size=self._collision_config.grid_cell_size
+            )
+            # Configurar intervalo de atualização do cache UI
+            if hasattr(self.collision_system, '_ui_cache_update_interval'):
+                self.collision_system._ui_cache_update_interval = self._collision_config.ui_cache_update_interval
+        else:
+            self.collision_system = None
+        
+    def configure_collision_system(self, config: CollisionConfig):
+        """Reconfigura o sistema de colisão em tempo de execução"""
+        old_config = self._collision_config
+        self._collision_config = config
+        
+        if not config.enabled:
+            # Desabilitar sistema de colisão
+            if self.collision_system:
+                self.collision_system.clear()
+                self.collision_system = None
+        elif not old_config.enabled and config.enabled:
+            # Reabilitar sistema de colisão
+            self.collision_system = CollisionSystem(
+                use_spatial_partitioning=config.use_spatial_partitioning,
+                grid_cell_size=config.grid_cell_size
+            )
+        elif self.collision_system:
+            # Atualizar configurações existentes
+            self.collision_system.set_spatial_partitioning(
+                config.use_spatial_partitioning, 
+                config.grid_cell_size
+            )
+    
+    def get_collision_config(self) -> CollisionConfig:
+        """Retorna a configuração atual do sistema de colisão"""
+        return self._collision_config
+    
+    def set_collision_spatial_partitioning(self, enabled: bool, cell_size: float = None):
+        """Atalho para configurar spatial partitioning"""
+        if self.collision_system:
+            cell_size = cell_size or self._collision_config.grid_cell_size
+            self.collision_system.set_spatial_partitioning(enabled, cell_size)
+            # Atualizar configuração
+            self._collision_config = self._collision_config._replace(
+                use_spatial_partitioning=enabled,
+                grid_cell_size=cell_size
+            )
+    
+    def disable_collision_system(self):
+        """Desabilita completamente o sistema de colisão"""
+        self.configure_collision_system(
+            self._collision_config._replace(enabled=False)
+        )
+    
+    def enable_collision_system(self):
+        """Reabilita o sistema de colisão"""
+        self.configure_collision_system(
+            self._collision_config._replace(enabled=True)
+        )
+
     def initialize(self):
         """Initialize scene resources. Called once when scene is added to manager."""
         if not self._is_initialized:
@@ -101,8 +176,28 @@ class BaseScene:
             if entity.active:
                 entity.tick()
 
-        # Update collision system
-        self.collision_system.update(self.entities)
+        # Update collision system com configurações
+        if self.collision_system and self._collision_config.enabled:
+            self._collision_frame_counter += 1
+            
+            # Verificar se deve atualizar colisões neste frame
+            if self._collision_frame_counter >= self._collision_config.update_frequency:
+                self._collision_frame_counter = 0
+                
+                # Escolher algoritmo baseado no número de entidades
+                entities_with_colliders = [
+                    e for e in self.entities 
+                    if hasattr(e, 'get_component') and e.get_component(Collider) is not None
+                ]
+                
+                # Auto-otimização: usar força bruta para poucas entidades
+                if (len(entities_with_colliders) <= self._collision_config.max_entities_for_bruteforce and 
+                    self._collision_config.use_spatial_partitioning):
+                    self.collision_system.set_spatial_partitioning(False)
+                    self.collision_system.update(self.entities)
+                    self.collision_system.set_spatial_partitioning(True, self._collision_config.grid_cell_size)
+                else:
+                    self.collision_system.update(self.entities)
 
     def render(self, screen: pygame.Surface):
         """Render the scene"""
@@ -173,6 +268,28 @@ class BaseScene:
         self._resources.clear()
         self._is_loaded = False
         self._loading_progress = 0
-        self.collision_system.clear()  # Clear collision system
+        
+        # Clear collision system
+        if self.collision_system:
+            self.collision_system.clear()
 
-
+    # Métodos de conveniência para debugging e profiling
+    def get_collision_stats(self) -> Dict[str, Any]:
+        """Retorna estatísticas do sistema de colisão"""
+        if not self.collision_system:
+            return {"enabled": False}
+        
+        entities_with_colliders = [
+            e for e in self.entities 
+            if hasattr(e, 'get_component') and e.get_component(Collider) is not None
+        ]
+        
+        return {
+            "enabled": self._collision_config.enabled,
+            "spatial_partitioning": self._collision_config.use_spatial_partitioning,
+            "grid_cell_size": self._collision_config.grid_cell_size,
+            "entities_with_colliders": len(entities_with_colliders),
+            "total_entities": len(self.entities),
+            "current_collision_pairs": len(self.collision_system.get_colliding_pairs()),
+            "update_frequency": self._collision_config.update_frequency
+        }

@@ -1,6 +1,7 @@
 import pygame
 from typing import Dict, List, Optional, Tuple, Callable
 from ..component import Component
+from ..resource_manager import ResourceManager
 
 class AnimationFrame:
     def __init__(self, x: int, y: int, width: int, height: int):
@@ -38,24 +39,38 @@ class SpriteAnimation(Component):
         self.flip_y = False
         self.scale = (1, 1)
         self.sprite_path: Optional[str] = None
+        self.resource_id: Optional[str] = None
+        self.resource_manager = ResourceManager.get_instance()
     
-    def load_sprite_sheet(self, path: str, colorkey: Optional[Tuple[int, int, int]] = None):
-        try:
-            self.sprite_sheet = pygame.image.load(path).convert_alpha()
-            if colorkey is not None:
-                self.sprite_sheet.set_colorkey(colorkey)
+    def load_sprite_sheet(self, path: str, colorkey: Optional[Tuple[int, int, int]] = None, resource_id: str = None):
+        """
+        Load a sprite sheet using the ResourceManager for caching.
+        
+        Args:
+            path: Path to the sprite sheet image
+            colorkey: Optional color key for transparency
+            resource_id: Optional ID for the resource (defaults to path)
             
-            self.sprite_path = path
+        Returns:
+            bool: True if loading was successful
+        """
+        self.resource_id = resource_id or path
+        self.sprite_path = path
+        
+        # Load the sprite sheet using ResourceManager
+        self.sprite_sheet = self.resource_manager.load_texture(path, self.resource_id, colorkey)
+        
+        if self.sprite_sheet:
             print(f"Loaded sprite sheet: {path}")
             return True
-        except pygame.error as e:
-            print(f"Could not load sprite sheet {path}: {e}")
+        else:
+            print(f"Could not load sprite sheet {path}")
             return False
     
     def extract_frames_from_lane(self, start_x: int, start_y: int, frame_width: int, frame_height: int, 
                                frame_count: int, lane_width: Optional[int] = None) -> List[pygame.Surface]:
         """
-        Extract frames from a specific lane in the sprite sheet
+        Extract frames from a specific lane in the sprite sheet using ResourceManager for caching.
         
         Args:
             start_x: Starting X position of the lane
@@ -68,37 +83,32 @@ class SpriteAnimation(Component):
         Returns:
             List of frame surfaces
         """
-        if not self.sprite_sheet:
+        if not self.sprite_sheet or not self.resource_id:
             return []
         
-        frames = []
+        # Use ResourceManager to extract and cache frames
         sheet_width = self.sprite_sheet.get_width()
         max_x = sheet_width if lane_width is None else start_x + lane_width
+        actual_frame_count = frame_count
         
+        # Calculate actual frame count based on lane width
         for i in range(frame_count):
             x = start_x + (i * frame_width)
             if x + frame_width > max_x:
+                actual_frame_count = i
                 break
-                
-            # Create frame surface
-            frame = pygame.Surface((frame_width, frame_height), pygame.SRCALPHA)
-            
-            # Extract frame from sprite sheet
-            frame.blit(self.sprite_sheet, (0, 0), (x, start_y, frame_width, frame_height))
-            
-            # Apply scale if needed
-            if self.scale != (1, 1):
-                scaled_width = int(frame_width * self.scale[0])
-                scaled_height = int(frame_height * self.scale[1])
-                frame = pygame.transform.scale(frame, (scaled_width, scaled_height))
-            
-            # Apply flip if needed
-            if self.flip_x or self.flip_y:
-                frame = pygame.transform.flip(frame, self.flip_x, self.flip_y)
-            
-            frames.append(frame)
         
-        return frames
+        # Use ResourceManager to extract and cache frames with transformations
+        return self.resource_manager.extract_sprite_frames(
+            self.resource_id,
+            start_x,
+            start_y,
+            frame_width,
+            frame_height,
+            actual_frame_count or frame_count,
+            scale=self.scale if self.scale != (1, 1) else None,
+            flip=(self.flip_x, self.flip_y) if (self.flip_x or self.flip_y) else None
+        )
     
     def create_animation_from_lane(self, name: str, start_x: int, start_y: int, 
                                  frame_width: int, frame_height: int, frame_count: int,
@@ -134,7 +144,21 @@ class SpriteAnimation(Component):
             return False
         
         # Create animation
-        self.animations[name] = Animation(name, frames, frame_duration, loop)
+        animation = Animation(name, frames, frame_duration, loop)
+        
+        # Store original parameters for recreating the animation when scale/flip changes
+        animation.original_params = {
+            'start_x': start_x,
+            'start_y': start_y,
+            'frame_width': frame_width,
+            'frame_height': frame_height,
+            'frame_count': frame_count
+        }
+        
+        if lane_width is not None:
+            animation.original_params['lane_width'] = lane_width
+            
+        self.animations[name] = animation
         print(f"Created animation '{name}' with {len(frames)} frames")
         return True
     
@@ -183,19 +207,44 @@ class SpriteAnimation(Component):
         self.scale = (scale_x, scale_y)
         
         # Recreate all animations with new scale
-        if self.sprite_sheet and self.animations:
+        if self.sprite_sheet and self.animations and self.resource_id:
             current_anim = self.current_animation.name if self.current_animation else None
-            animations_to_recreate = list(self.animations.items())
-            self.animations.clear()
             
-            for name, anim in animations_to_recreate:
-                frames = [pygame.transform.scale(
-                    frame,
-                    (int(frame.get_width() * scale_x), int(frame.get_height() * scale_y))
-                ) for frame in anim.frames]
-                self.animations[name] = Animation(name, frames, anim.frame_duration, anim.loop)
+            # Store animation properties to recreate them
+            animations_to_recreate = []
+            for name, anim in self.animations.items():
+                # Find the original animation parameters
+                if hasattr(anim, 'original_params'):
+                    animations_to_recreate.append((name, anim.original_params, anim.frame_duration, anim.loop))
+                else:
+                    # Fallback for animations without original params
+                    frames = [pygame.transform.scale(
+                        frame,
+                        (int(frame.get_width() * scale_x), int(frame.get_height() * scale_y))
+                    ) for frame in anim.frames]
+                    new_anim = Animation(name, frames, anim.frame_duration, anim.loop)
+                    self.animations[name] = new_anim
             
-            if current_anim:
+            # Clear animations that will be recreated
+            for name, _, _, _ in animations_to_recreate:
+                if name in self.animations:
+                    del self.animations[name]
+            
+            # Recreate animations with new scale
+            for name, params, duration, loop in animations_to_recreate:
+                self.create_animation_from_lane(
+                    name=name,
+                    start_x=params['start_x'],
+                    start_y=params['start_y'],
+                    frame_width=params['frame_width'],
+                    frame_height=params['frame_height'],
+                    frame_count=params['frame_count'],
+                    frame_duration=duration,
+                    loop=loop,
+                    lane_width=params.get('lane_width')
+                )
+            
+            if current_anim and current_anim in self.animations:
                 self.play(current_anim)
     
     def set_flip(self, flip_x: bool, flip_y: bool):
@@ -207,16 +256,41 @@ class SpriteAnimation(Component):
         self.flip_y = flip_y
         
         # Recreate all animations with new flip state
-        if self.sprite_sheet and self.animations:
+        if self.sprite_sheet and self.animations and self.resource_id:
             current_anim = self.current_animation.name if self.current_animation else None
-            animations_to_recreate = list(self.animations.items())
-            self.animations.clear()
             
-            for name, anim in animations_to_recreate:
-                frames = [pygame.transform.flip(frame, flip_x, flip_y) for frame in anim.frames]
-                self.animations[name] = Animation(name, frames, anim.frame_duration, anim.loop)
+            # Store animation properties to recreate them
+            animations_to_recreate = []
+            for name, anim in self.animations.items():
+                # Find the original animation parameters
+                if hasattr(anim, 'original_params'):
+                    animations_to_recreate.append((name, anim.original_params, anim.frame_duration, anim.loop))
+                else:
+                    # Fallback for animations without original params
+                    frames = [pygame.transform.flip(frame, flip_x, flip_y) for frame in anim.frames]
+                    new_anim = Animation(name, frames, anim.frame_duration, anim.loop)
+                    self.animations[name] = new_anim
             
-            if current_anim:
+            # Clear animations that will be recreated
+            for name, _, _, _ in animations_to_recreate:
+                if name in self.animations:
+                    del self.animations[name]
+            
+            # Recreate animations with new flip state
+            for name, params, duration, loop in animations_to_recreate:
+                self.create_animation_from_lane(
+                    name=name,
+                    start_x=params['start_x'],
+                    start_y=params['start_y'],
+                    frame_width=params['frame_width'],
+                    frame_height=params['frame_height'],
+                    frame_count=params['frame_count'],
+                    frame_duration=duration,
+                    loop=loop,
+                    lane_width=params.get('lane_width')
+                )
+            
+            if current_anim and current_anim in self.animations:
                 self.play(current_anim)
     
     def tick(self):

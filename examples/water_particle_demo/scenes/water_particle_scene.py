@@ -4,6 +4,8 @@ from engine.core.scenes.base_scene import BaseScene
 from engine.core.entity import Entity
 from engine.core.components.particle_system import ParticleSystem
 from engine.core.components.debug_info import DebugInfoComponent
+from engine.core.components.ui.slider import Slider
+from engine import Engine
 
 class DebugInfo(Entity):
     def __init__(self):
@@ -21,7 +23,19 @@ class WaterParticleScene(BaseScene):
         self.spawn_rate = 20
         self.spawn_spread = 24
         self.add_entity(DebugInfo())
+        
+        slider = Slider(100,0, 100, 50,)
+        slider.max_value = 250
+        slider.min_value = 10
+        slider.on_value_changed = self.ChangeFps
 
+        self.add_entity(slider)
+
+    def ChangeFps(self, value):
+        Engine.ENGINE_INSTANCE.interface.set_fps(int(value))
+        print(value)
+        
+        pass
 
     def handle_event(self, event):
         super().handle_event(event)

@@ -24,6 +24,7 @@ from .core.pathfinding import astar
 import multiprocessing as mp
 
 class Engine:
+    ENGINE_INSTANCE = None 
     def __init__(self, title: str = "PyEngine Game", width: int = 800, height: int = 600, num_threads: int = None):
         # Create interface with title and size
         self.interface = Interface(title, (width, height))
@@ -32,6 +33,8 @@ class Engine:
         
         # Set number of threads
         self.num_threads = num_threads if num_threads is not None else mp.cpu_count()
+        Engine.ENGINE_INSTANCE = self
+        print(Engine.ENGINE_INSTANCE)
 
     def set_scene(self, name: str, scene):
         """Add and set a scene as the current scene"""

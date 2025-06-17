@@ -114,7 +114,7 @@ class Slider(UIElement):
             
         return False
     
-    def render(self, screen: pygame.Surface):
+    def render(self, screen: pygame.Surface, camera_offset):
         """Render slider track and handle"""
         if not self.visible:
             return

@@ -77,9 +77,9 @@ class LoadingScene(BaseScene):
         self.loading_ui = LoadingUI(self)
         self.add_entity(self.loading_ui, "ui")
         
-    def update(self):
+    def update(self, delta_time=0):
         """Update loading progress and handle scene transition"""
-        super().update()
+        super().update(delta_time)
         
         if self._target_scene and self.interface and self.interface.scene_manager:
             target = self.interface.scene_manager._scenes.get(self._target_scene)
@@ -101,7 +101,7 @@ class LoadingScene(BaseScene):
                     self._loading_progress = 0
                 else:
                     # Continue loading process
-                    target.update()
+                    target.update(delta_time)
                 
     def render(self, screen: pygame.Surface):
         """Render the loading scene"""
