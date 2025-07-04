@@ -4,6 +4,7 @@ from ..camera import Camera
 from ..resource_loader import ResourceLoader
 from .collision_system import CollisionSystem
 from ..components.collider import Collider
+from ..thread_pool import ThreadPool, get_global_thread_pool
 
 class CollisionConfig(NamedTuple):
     """Configuração do sistema de colisão"""
@@ -14,8 +15,17 @@ class CollisionConfig(NamedTuple):
     update_frequency: int = 1  # A cada quantos frames atualizar (1 = todo frame)
     ui_cache_update_interval: int = 60  # Frames entre atualizações do cache UI
 
+class ThreadConfig(NamedTuple):
+    """Configuração do sistema de threads"""
+    enabled: bool = True
+    max_workers: Optional[int] = None  # None = auto-detect CPU count
+    min_entities_for_threading: int = 20  # Minimum entities to justify threading overhead
+    batch_size_multiplier: float = 1.5  # Multiplier for optimal batch size calculation
+    use_global_pool: bool = True  # Use shared thread pool or create scene-specific one
+
 class BaseScene:
-    def __init__(self, num_threads: int = None, collision_config: CollisionConfig = None):
+    def __init__(self, num_threads: int = None, collision_config: CollisionConfig = None, 
+                 thread_config: ThreadConfig = None):
         self.entities = []
         self.entity_groups: Dict[str, List] = {}
         self.interface = None
@@ -26,6 +36,11 @@ class BaseScene:
         self.camera = None  # Will be initialized when interface is set
         self.resource_loader = ResourceLoader()  # Get the singleton instance
         self.delta_time: float = 0.0  # Initialize delta_time
+        
+        # Thread configuration
+        self._thread_config = thread_config or ThreadConfig()
+        self._thread_pool = None
+        self._init_thread_pool(num_threads)
         
         # Configuração do sistema de colisão
         self._collision_config = collision_config or CollisionConfig()
@@ -42,6 +57,49 @@ class BaseScene:
                 self.collision_system._ui_cache_update_interval = self._collision_config.ui_cache_update_interval
         else:
             self.collision_system = None
+            
+    def _init_thread_pool(self, num_threads: Optional[int] = None):
+        """Initialize thread pool for parallel entity updates."""
+        if not self._thread_config.enabled:
+            self._thread_pool = None
+            return
+            
+        if self._thread_config.use_global_pool:
+            self._thread_pool = get_global_thread_pool()
+        else:
+            # Create scene-specific thread pool
+            max_workers = num_threads or self._thread_config.max_workers
+            self._thread_pool = ThreadPool(max_workers=max_workers)
+            
+    def configure_threading(self, config: ThreadConfig):
+        """Reconfigure threading system at runtime."""
+        old_config = self._thread_config
+        self._thread_config = config
+        
+        # Shutdown old thread pool if it was scene-specific
+        if not old_config.use_global_pool and self._thread_pool:
+            self._thread_pool.shutdown()
+            
+        # Initialize new thread pool
+        self._init_thread_pool()
+        
+    def get_thread_config(self) -> ThreadConfig:
+        """Get current thread configuration."""
+        return self._thread_config
+        
+    def set_thread_count(self, num_threads: int):
+        """Set number of threads for entity updates."""
+        config = self._thread_config._replace(max_workers=num_threads, use_global_pool=False)
+        self.configure_threading(config)
+        
+    def enable_threading(self, enabled: bool = True):
+        """Enable or disable threaded entity updates."""
+        config = self._thread_config._replace(enabled=enabled)
+        self.configure_threading(config)
+        
+    def disable_threading(self):
+        """Disable threaded entity updates."""
+        self.enable_threading(False)
         
     def configure_collision_system(self, config: CollisionConfig):
         """Reconfigura o sistema de colisão em tempo de execução"""
@@ -171,10 +229,34 @@ class BaseScene:
         if self.camera:
             self.camera.update()
 
-        # Update all active entities
-        for entity in self.entities:
-            if entity.active:
-                entity.tick()
+        # Update all active entities (with optional parallel processing)
+        active_entities = [entity for entity in self.entities if entity.active]
+        
+        if (self._thread_config.enabled and self._thread_pool and 
+            len(active_entities) >= self._thread_config.min_entities_for_threading):
+            # Use parallel processing for large entity counts
+            self._update_entities_parallel(active_entities, delta_time)
+        else:
+            # Use sequential processing for small entity counts or when threading is disabled
+            self._update_entities_sequential(active_entities, delta_time)
+            
+    def _update_entities_parallel(self, entities: List, delta_time: float):
+        """Update entities using parallel processing."""
+        try:
+            min_batch_size = max(5, int(self._thread_config.min_entities_for_threading * 0.5))
+            self._thread_pool.update_entities_parallel(entities, delta_time, min_batch_size)
+        except Exception as e:
+            print(f"Error in parallel entity update, falling back to sequential: {e}")
+            self._update_entities_sequential(entities, delta_time)
+            
+    def _update_entities_sequential(self, entities: List, delta_time: float):
+        """Update entities sequentially (fallback method)."""
+        for entity in entities:
+            try:
+                entity.delta_time = delta_time
+                entity.update()
+            except Exception as e:
+                print(f"Error updating entity {entity.id}: {e}")
 
         # Update collision system com configurações
         if self.collision_system and self._collision_config.enabled:
@@ -272,6 +354,10 @@ class BaseScene:
         # Clear collision system
         if self.collision_system:
             self.collision_system.clear()
+            
+        # Shutdown scene-specific thread pool
+        if not self._thread_config.use_global_pool and self._thread_pool:
+            self._thread_pool.shutdown()
 
     # Métodos de conveniência para debugging e profiling
     def get_collision_stats(self) -> Dict[str, Any]:

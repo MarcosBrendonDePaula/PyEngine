@@ -32,7 +32,7 @@ class SyncComponent(Component):
         self.client.stop()
         super().detach()
 
-    def tick(self):
+    def update(self):
         if not self.entity:
             return
         self.client.send_update(self.serialize_fn())

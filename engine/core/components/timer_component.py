@@ -1,5 +1,5 @@
 from engine.core.component import Component
-from typing import Callable, Dict
+from typing import Callable, Dict, Any
 import pygame
 
 class TimerComponent(Component):
@@ -33,8 +33,8 @@ class TimerComponent(Component):
         if name in self._timers:
             del self._timers[name]
 
-    def tick(self):
-        delta_time = self.entity.scene.delta_time if self.entity and self.entity.scene else 0.016 # Default to ~60 FPS
+    def update(self):
+        delta_time = self.entity.delta_time if self.entity and hasattr(self.entity, 'delta_time') else 0.016 # Default to ~60 FPS
         timers_to_trigger = []
         timers_to_delete = []
 

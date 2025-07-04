@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(rg:*)",
+      "Bash(find:*)",
+      "Bash(grep:*)",
+      "Bash(python -m pytest tests/ -v)",
+      "Bash(python3 -m pytest tests/ -v)",
+      "Bash(python3:*)",
+      "Bash(python -m pytest tests/test_components.py::test_particle_system_lifecycle -v)",
+      "Bash(python:*)",
+      "Bash(awk:*)",
+      "Bash(mkdir:*)",
+      "Bash(ls:*)",
+      "Bash(chmod:*)"
+    ],
+    "deny": []
+  }
+}

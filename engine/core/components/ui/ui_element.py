@@ -107,7 +107,7 @@ class UIElement:
         self.border_width = border_width
         self.padding = padding
         
-    def tick(self):
+    def update(self):
         """Update method for scene compatibility"""
         if not self.active:
             return
@@ -115,4 +115,4 @@ class UIElement:
         # Update components if any
         for component in self.components.values():
             if component.enabled:
-                component.tick()
+                component.update()

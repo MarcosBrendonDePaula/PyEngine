@@ -68,10 +68,13 @@ class Interface:
 
     def handle_events(self):
         """Process all events"""
+        from .input import input_manager
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
             else:
+                # Update input manager with events
+                input_manager.handle_event(event)
                 self.scene_manager.handle_event(event)
 
     def update(self, delta_time: float):
@@ -94,6 +97,10 @@ class Interface:
             self.render()
             delta_time = self.clock.tick(self.fps) / 1000.0  # Convert milliseconds to seconds
             self.scene_manager.update(delta_time)
+            
+            # Update input manager at end of frame
+            from .input import input_manager
+            input_manager.update()
 
         # Cleanup
         print("Cleaning up")

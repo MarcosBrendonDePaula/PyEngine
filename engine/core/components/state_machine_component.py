@@ -8,11 +8,11 @@ class StateMachineComponent(Component):
         self._states: Dict[str, Dict[str, Callable]] = states if states is not None else {}
         self._state_data: Dict[str, Any] = {}
 
-    def add_state(self, state_name: str, on_enter: Callable = None, on_exit: Callable = None, on_tick: Callable = None):
+    def add_state(self, state_name: str, on_enter: Callable = None, on_exit: Callable = None, on_update: Callable = None):
         self._states[state_name] = {
             "on_enter": on_enter,
             "on_exit": on_exit,
-            "on_tick": on_tick
+            "on_update": on_update
         }
 
     def change_state(self, new_state_name: str, data: Any = None):
@@ -30,9 +30,9 @@ class StateMachineComponent(Component):
         if self._states[self._current_state]["on_enter"]:
             self._states[self._current_state]["on_enter"](self.entity, data)
 
-    def tick(self):
-        if self._current_state in self._states and self._states[self._current_state]["on_tick"]:
-            self._states[self._current_state]["on_tick"](self.entity, self._state_data.get(self._current_state))
+    def update(self):
+        if self._current_state in self._states and self._states[self._current_state]["on_update"]:
+            self._states[self._current_state]["on_update"](self.entity, self._state_data.get(self._current_state))
 
     def get_current_state(self) -> str:
         return self._current_state

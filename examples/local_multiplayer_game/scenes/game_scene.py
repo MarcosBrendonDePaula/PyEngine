@@ -76,7 +76,7 @@ class GameScene(BaseScene):
             self._is_loaded = True
             self._loading_progress = 100
 
-    def update(self):
+    def update(self, delta_time: float):
         """Update scene with entity processing and collision detection"""
         if not self._is_loaded:
             print(f"Current loading step: {self._current_step}")
@@ -93,7 +93,7 @@ class GameScene(BaseScene):
             return
 
         # First update all entities using parallel processing
-        super().update()
+        super().update(delta_time)
         
         # Then update collision system
         self.collision_system.update(self.entities)
@@ -249,9 +249,9 @@ class UIManager(Entity):
         if self.scene and self.scene.interface:
             self.scene.interface.running = False
 
-    def update(self):
+    def update(self, delta_time: float):
         if not self.scene.paused:
-            self.time += 1/60  # Assuming 60 FPS
+            self.time += delta_time  # Use actual delta time instead of assuming 60 FPS
             self.score_label.text = f"Score: {self.score}"
             self.time_label.text = f"Time: {int(self.time)}s"
 

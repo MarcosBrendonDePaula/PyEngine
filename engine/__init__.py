@@ -18,30 +18,56 @@ from .core.components.particle_system import ParticleSystem
 from .core.components.tilemap import TileMap
 from .core.components.network_component import NetworkComponent
 from .multiplayer import DedicatedServer, Client, SyncComponent
-from .core.scenes.base_scene import BaseScene
+from .core.scenes.base_scene import BaseScene, ThreadConfig
+from .core.thread_pool import ThreadPool, get_global_thread_pool, shutdown_global_thread_pool
 from .core.save_manager import SaveManager
 from .core.pathfinding import astar
 import multiprocessing as mp
 
 class Engine:
     ENGINE_INSTANCE = None 
-    def __init__(self, title: str = "PyEngine Game", width: int = 800, height: int = 600, num_threads: int = None):
+    def __init__(self, title: str = "PyEngine Game", width: int = 800, height: int = 600, 
+                 num_threads: int = None, enable_threading: bool = True):
         # Create interface with title and size
         self.interface = Interface(title, (width, height))
         self.camera = Camera(width, height)
         self.input = input_manager
         
         # Set number of threads
-        self.num_threads = num_threads if num_threads is not None else mp.cpu_count()
+        self.num_threads = num_threads if num_threads is not None else min(mp.cpu_count(), 8)
+        self.threading_enabled = enable_threading
+        
+        # Initialize global thread pool if threading is enabled
+        if self.threading_enabled:
+            self.thread_pool = get_global_thread_pool()
+        else:
+            self.thread_pool = None
+            
         Engine.ENGINE_INSTANCE = self
-        print(Engine.ENGINE_INSTANCE)
+        print(f"Engine initialized with {self.num_threads} threads, threading {'enabled' if enable_threading else 'disabled'}")
 
     def set_scene(self, name: str, scene):
         """Add and set a scene as the current scene"""
+        # Configure scene threading if not already configured
+        if hasattr(scene, '_thread_config') and scene._thread_config.enabled != self.threading_enabled:
+            thread_config = ThreadConfig(
+                enabled=self.threading_enabled,
+                max_workers=self.num_threads,
+                use_global_pool=True
+            )
+            scene.configure_threading(thread_config)
         self.interface.set_scene(name, scene)
 
     def add_scene(self, name: str, scene):
         """Add a scene to the engine"""
+        # Configure scene threading
+        if hasattr(scene, '_thread_config'):
+            thread_config = ThreadConfig(
+                enabled=self.threading_enabled,
+                max_workers=self.num_threads,
+                use_global_pool=True
+            )
+            scene.configure_threading(thread_config)
         self.interface.add_scene(name, scene)
 
     def change_scene(self, name: str):
@@ -51,18 +77,70 @@ class Engine:
     def set_num_threads(self, num_threads: int):
         """Set the number of threads for parallel processing"""
         self.num_threads = max(1, num_threads)  # Ensure at least 1 thread
-        current_scene = self.interface.get_current_scene()
-        if current_scene:
-            current_scene.set_num_threads(self.num_threads)
+        
+        # Update all scenes in scene manager
+        if hasattr(self.interface.scene_manager, '_scenes'):
+            for scene in self.interface.scene_manager._scenes.values():
+                if hasattr(scene, 'set_thread_count'):
+                    scene.set_thread_count(self.num_threads)
+                    
+    def enable_threading(self, enabled: bool = True):
+        """Enable or disable threading for all scenes"""
+        self.threading_enabled = enabled
+        
+        # Update all scenes
+        if hasattr(self.interface.scene_manager, '_scenes'):
+            for scene in self.interface.scene_manager._scenes.values():
+                if hasattr(scene, 'enable_threading'):
+                    scene.enable_threading(enabled)
+                    
+        # Initialize or shutdown global thread pool
+        if enabled and self.thread_pool is None:
+            self.thread_pool = get_global_thread_pool()
+        elif not enabled and self.thread_pool is not None:
+            # Don't shutdown global pool, just stop using it
+            self.thread_pool = None
 
     def run(self):
         """Start the game loop"""
-        self.interface.run()
+        try:
+            self.interface.run()
+        finally:
+            # Cleanup threading resources
+            if self.threading_enabled:
+                shutdown_global_thread_pool()
+                
+    def shutdown(self):
+        """Shutdown the engine and cleanup resources"""
+        if self.threading_enabled:
+            shutdown_global_thread_pool()
+        print("Engine shutdown complete")
 
 # Convenience function to create and start the engine
 def create_engine(title: str = "PyEngine Game", width: int = 800, height: int = 600, 
                  num_threads: int = None) -> Engine:
-    return Engine(title, width, height, num_threads)
+    """
+    Create a PyEngine instance with automatic threading configuration.
+    
+    Args:
+        title: Window title
+        width: Window width
+        height: Window height
+        num_threads: Number of threads to use. If None, auto-detects optimal count.
+    
+    Returns:
+        Configured Engine instance
+    """
+    # Auto-detect optimal thread count if not specified
+    if num_threads is None:
+        import multiprocessing as mp
+        cpu_count = mp.cpu_count()
+        num_threads = max(1, int(cpu_count * 0.75))  # Use 75% of available cores
+    
+    # Enable threading if more than 1 thread requested
+    enable_threading = num_threads > 1
+    
+    return Engine(title, width, height, num_threads, enable_threading)
 
 # Add UI components to exports
 from .core.components.ui.button import Button
@@ -96,6 +174,10 @@ __all__ = [
     'AdvancedCamera',
     'input_manager',
     'create_engine',
+    'ThreadConfig',
+    'ThreadPool',
+    'get_global_thread_pool',
+    'shutdown_global_thread_pool',
     'Component',
     'KeyboardController',
     'GamepadController',

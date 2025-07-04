@@ -26,8 +26,8 @@ class MovableObject(Entity):
         self.speed = 8.0
         self.knockback_force = 5.0
 
-    def tick(self):
-        super().tick()
+    def update(self):
+        super().update()
         
         # Check collisions with other objects
         if self.scene:
@@ -163,7 +163,7 @@ class Player(MovableObject):
     def __init__(self, x: float, y: float):
         super().__init__(x, y, 40, 40, (0, 255, 0), "Player", is_static=False)
     
-    def tick(self):
+    def update(self):
         # Handle movement first
         keys = pygame.key.get_pressed()
         dx = dy = 0
@@ -186,7 +186,7 @@ class Player(MovableObject):
         self.physics.set_velocity(dx, dy)
         
         # Then do collision checks
-        super().tick()
+        super().update()
 
 class ColliderDemoScene(BaseScene):
     def __init__(self):
@@ -194,7 +194,6 @@ class ColliderDemoScene(BaseScene):
         self._is_loaded = True
         self.setup_demo()
         self.rotation = 0
-        self.last_time = pygame.time.get_ticks()
 
     def setup_demo(self):
         # Create player
@@ -255,17 +254,12 @@ class ColliderDemoScene(BaseScene):
             pygame.display.get_surface().blit(surface, (10, y))
             y += 25
 
-    def update(self):
-        # Calculate dt
-        current_time = pygame.time.get_ticks()
-        dt = (current_time - self.last_time) / 1000.0  # Convert to seconds
-        self.last_time = current_time
-
+    def update(self, delta_time: float):
         # Call parent update
-        super().update()
+        super().update(delta_time)
         
-        # Rotate all polygon colliders
-        self.rotation += 45 * dt  # 45 degrees per second
+        # Rotate all polygon colliders using actual delta time
+        self.rotation += 45 * delta_time  # 45 degrees per second
         for entity in self.entities:
             collider = entity.get_component(PolygonCollider)
             if collider:

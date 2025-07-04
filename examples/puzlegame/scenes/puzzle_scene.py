@@ -53,8 +53,8 @@ class PuzzlePiece(Entity):
             points.append((px, py))
         return points
     
-    def tick(self):
-        super().tick()
+    def update(self):
+        super().update()
         
         # Check collisions
         if self.scene:

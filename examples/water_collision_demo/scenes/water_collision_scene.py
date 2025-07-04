@@ -91,7 +91,7 @@ class WaterCollisionScene(BaseScene):
         self.add_entity(fps_label)
         
         fps_slider = Slider(120, 20, 100, 20)
-        fps_slider.max_value = 250
+        fps_slider.max_value = 800
         fps_slider.min_value = 10
         fps_slider.value = 60
         fps_slider.on_value_changed = self._change_fps
@@ -261,9 +261,9 @@ class WaterCollisionScene(BaseScene):
                 # Add random obstacle
                 self._add_random_obstacle()
     
-    def update(self, delta):
+    def update(self, delta_time: float):
         """Update the scene"""
-        super().update(delta)
+        super().update(delta_time)
         if not self._is_loaded:
             return
             

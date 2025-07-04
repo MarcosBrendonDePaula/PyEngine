@@ -38,7 +38,6 @@ class DirectionalLightDemo(BaseScene):
         self.background_color = (10, 10, 15)  # Darker background
         
         # Track time for light rotation
-        self.last_time = pygame.time.get_ticks()
         self.auto_rotate = True
         self.rotation_speed = 30  # Slower rotation for better visibility
         
@@ -87,16 +86,13 @@ class DirectionalLightDemo(BaseScene):
         self.light_entity.add_component(self.light)
         self.add_entity(self.light_entity, "lights")
     
-    def update(self):
-        # Calculate dt
-        current_time = pygame.time.get_ticks()
-        dt = (current_time - self.last_time) / 1000.0  # Convert to seconds
-        self.last_time = current_time
+    def update(self, delta_time: float):
+        super().update(delta_time)
         
         # Update light rotation if auto-rotate is enabled
         if self.auto_rotate and hasattr(self, 'light'):
             current_angle = self.light.angle
-            new_angle = (current_angle + self.rotation_speed * dt) % 360
+            new_angle = (current_angle + self.rotation_speed * delta_time) % 360
             self.light.set_angle(new_angle)
         
         # Handle keyboard input for light movement

@@ -293,7 +293,7 @@ class SpriteAnimation(Component):
             if current_anim and current_anim in self.animations:
                 self.play(current_anim)
     
-    def tick(self):
+    def update(self):
         """Update the animation state - called every frame"""
         if not self.current_animation:
             return
@@ -309,9 +309,7 @@ class SpriteAnimation(Component):
         
         # Update frame based on time and speed multiplier
         frame_duration = self.current_animation.frame_duration / self.current_animation.speed_multiplier
-        dt = 1/60
-        if self.entity and self.entity.scene and self.entity.scene.interface:
-            dt = self.entity.scene.interface.clock.get_time() / 1000.0
+        dt = self.entity.delta_time if self.entity and hasattr(self.entity, 'delta_time') else 1/60
         self.current_animation.time_accumulated += dt
         
         while self.current_animation.time_accumulated >= frame_duration:

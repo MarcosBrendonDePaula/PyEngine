@@ -75,7 +75,7 @@ class Physics(Component):
                 self.entity.position.y += overlap_y
             self.velocity.y = -self.velocity.y * self.restitution
 
-    def tick(self):
+    def update(self):
         if not self.enabled or not self.entity or self.is_static:
             return
 

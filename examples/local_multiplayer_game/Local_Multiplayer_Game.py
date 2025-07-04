@@ -34,8 +34,8 @@ class Player(Entity):
             if event.key == self.controls['attack']:
                 self.attack()
     
-    def tick(self):
-        super().tick()
+    def update(self):
+        super().update()
         # Handle movement
         keys = pygame.key.get_pressed()
         dx = dy = 0
@@ -101,8 +101,8 @@ class AttackHitbox(Entity):
         self.owner = owner
         self.lifetime = 10  # Frames the attack lasts
         
-    def tick(self):
-        super().tick()
+    def update(self):
+        super().update()
         # Remove after lifetime
         self.lifetime -= 1
         if self.lifetime <= 0 and self.scene:
@@ -163,8 +163,8 @@ class MultiplayerScene(BaseScene):
         self.p2_health.set_colors((0, 255, 0))  # Green progress
         self.add_entity(self.p2_health, "ui")
     
-    def update(self):
-        super().update()  # This now includes collision system update
+    def update(self, delta_time: float):
+        super().update(delta_time)  # This now includes collision system update
         # Update health bars
         self.p1_health.progress = self.player1.health / 100
         self.p2_health.progress = self.player2.health / 100

@@ -88,7 +88,8 @@ def test_sync_component_auto_attrs():
 
     entity.position.x = 12
     entity.position.y = 34
-    entity.tick()
+    entity.delta_time = 0.016  # 60 FPS
+    entity.update()
 
     for _ in range(50):
         time.sleep(0.01)

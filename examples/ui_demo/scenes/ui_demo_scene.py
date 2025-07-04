@@ -244,11 +244,11 @@ class UIDemoScene(BaseScene):
                           placeholder)
         self.image_panel.add_child(self.image)
     
-    def update(self):
-        super().update()
+    def update(self, delta_time: float):
+        super().update(delta_time)
         
-        # Animate progress bar
-        self.progress_bar.progress = (self.progress_bar.progress + 0.001) % 1.0
+        # Animate progress bar using delta time for smooth animation
+        self.progress_bar.progress = (self.progress_bar.progress + delta_time * 0.1) % 1.0
         
     def render(self, screen: pygame.Surface):
         """Render scene"""

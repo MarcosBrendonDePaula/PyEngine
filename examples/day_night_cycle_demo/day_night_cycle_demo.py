@@ -1,47 +1,29 @@
 import pygame
 from engine.core.scenes.scene_manager import SceneManager
-from .scenes.day_night_cycle_scene import DayNightCycleScene
+from scenes.day_night_cycle_scene import DayNightCycleScene
+
+import multiprocessing as mp
+from engine import create_engine
 
 def main():
-    pygame.init()
-    screen = pygame.display.set_mode((800, 600))
-    pygame.display.set_caption("Day/Night Cycle Demo")
+    # Get CPU cores for processing
+    cpu_count = mp.cpu_count()
+    num_threads = max(1, int(cpu_count * 0.75))
     
-    # Create interface mock for the scene manager
-    class Interface:
-        def __init__(self, screen):
-            self.screen = screen
-            self.size = screen.get_size()
+    # Create engine
+    engine = create_engine(
+        title="Day/Night Cycle Demo",
+        width=800,
+        height=600,
+        num_threads=num_threads
+    )
+
+    # Create and set scene
+    scene = DayNightCycleScene()
+    engine.set_scene("light_demo", scene)
     
-    interface = Interface(screen)
-    
-    scene_manager = SceneManager()
-    scene_manager.set_interface(interface)
-    scene_manager.add_scene("day_night", DayNightCycleScene())
-    scene_manager.set_scene("day_night", transition=False)
-    
-    clock = pygame.time.Clock()
-    running = True
-    
-    while running:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
-            scene_manager.handle_event(event)
-        
-        clock.tick(60)  # Maintain 60 FPS
-        
-        # Clear screen
-        screen.fill((0, 0, 0))
-        
-        # Update and render
-        scene_manager.update()
-        scene_manager.render(screen)
-        
-        pygame.display.flip()
-    
-    scene_manager.cleanup()
-    pygame.quit()
+    # Run game
+    engine.run()
 
 if __name__ == "__main__":
     main()

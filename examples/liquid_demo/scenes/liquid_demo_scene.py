@@ -24,8 +24,8 @@ class LiquidDemoScene(BaseScene):
             gy = event.pos[1] // self.scale
             self.disturb(gx, gy)
 
-    def update(self, delta):
-        super().update(delta)
+    def update(self, delta_time: float):
+        super().update(delta_time)
         if not self._is_loaded:
             return
         for x in range(1, self.grid_width-1):

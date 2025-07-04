@@ -83,7 +83,7 @@ class PositionalAudioComponent(Component):
         
         return volume, pan
             
-    def tick(self):
+    def update(self):
         """Update the audio based on listener position and direction"""
         if self.is_playing and self.channel and self.entity and self.listener:
             # Get listener position

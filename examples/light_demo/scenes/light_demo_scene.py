@@ -61,9 +61,9 @@ class LightDemoScene(BaseScene):
         
         self.add_entity(static_light)
     
-    def tick(self):
+    def update(self, delta_time: float):
         """Update scene logic"""
-        super().tick()
+        super().update(delta_time)
         
         # Update obstacles for all lights
         for entity in self.entities:

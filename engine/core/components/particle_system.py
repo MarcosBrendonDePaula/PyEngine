@@ -21,12 +21,10 @@ class ParticleSystem(Component):
         if len(self.particles) < self.max_particles:
             self.particles.append(Particle(position, velocity, color, lifetime, radius))
 
-    def tick(self):
+    def update(self):
         if not self.enabled:
             return
-        dt = 1/60
-        if self.entity and self.entity.scene and self.entity.scene.interface:
-            dt = self.entity.scene.interface.clock.get_time() / 1000.0
+        dt = self.entity.delta_time if self.entity and hasattr(self.entity, 'delta_time') else 1/60
         for p in self.particles[:]:
             p.position += p.velocity * dt
             p.age += dt

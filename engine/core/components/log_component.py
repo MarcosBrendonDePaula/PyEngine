@@ -53,7 +53,7 @@ class LogComponent(Component):
         """Clear all log messages"""
         self.messages.clear()
             
-    def tick(self):
+    def update(self):
         """Update log messages, removing expired ones"""
         # Remove expired messages
         self.messages = [msg for msg in self.messages if not msg.should_remove()]

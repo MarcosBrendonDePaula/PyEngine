@@ -95,7 +95,7 @@ class ResourceCacheDemoScene(BaseScene):
         """Update the stats labels with current information"""
         update_stats_labels(self)
     
-    def update(self, delta_time):
+    def update(self, delta_time: float):
         """Update the scene"""
         super().update(delta_time)
         

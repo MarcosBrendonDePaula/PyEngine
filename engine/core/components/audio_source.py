@@ -136,7 +136,7 @@ class AudioSourceComponent(Component):
         # Aplicar volumes finais
         self.channel.set_volume(left_vol, right_vol)
             
-    def tick(self):
+    def update(self):
         """Atualiza o áudio baseado na posição do ouvinte"""
         if not self.is_playing or not self.channel or not self.entity:
             return

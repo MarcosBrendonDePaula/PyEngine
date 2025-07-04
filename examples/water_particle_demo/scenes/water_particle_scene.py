@@ -42,8 +42,8 @@ class WaterParticleScene(BaseScene):
         if event.type == pygame.MOUSEMOTION:
             self.emitter.position.x = event.pos[0]
 
-    def update(self, delta):
-        super().update(delta)
+    def update(self, delta_time: float):
+        super().update(delta_time)
         if not self._is_loaded:
             return
         dt = self.interface.clock.get_time() / 1000.0

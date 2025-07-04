@@ -12,7 +12,7 @@ class KeyboardController(Component):
             pygame.K_DOWN: (0, 1)
         }
 
-    def tick(self):
+    def update(self):
         if not self.enabled or not self.entity:
             return
 

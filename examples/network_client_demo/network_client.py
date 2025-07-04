@@ -13,8 +13,8 @@ class Player(Entity):
         self.add_component(SyncComponent(client))
         self.speed = 5
 
-    def tick(self):
-        super().tick()
+    def update(self):
+        super().update()
         keys = pygame.key.get_pressed()
         vx = vy = 0
         if keys[pygame.K_a]:

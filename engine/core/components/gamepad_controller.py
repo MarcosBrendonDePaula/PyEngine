@@ -12,7 +12,7 @@ class GamepadController(Component):
             self.joystick = pygame.joystick.Joystick(index)
             self.joystick.init()
 
-    def tick(self):
+    def update(self):
         if not self.enabled or not self.entity or not self.joystick:
             return
         pygame.event.pump()

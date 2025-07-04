@@ -69,7 +69,8 @@ def test_particle_system_lifecycle():
     ps.emit((0, 0), (1, 0), lifetime=0.05)
     for _ in range(5):
         scene.interface.clock.tick(60)
-        entity.tick()
+        entity.delta_time = 0.016  # 60 FPS
+        entity.update()
     assert len(ps.particles) == 0
 
 

@@ -155,17 +155,16 @@ class TestStateMachineComponent(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.sm_component.change_state("undefined_state")
 
-    def test_tick_calls_on_tick(self):
-        on_tick_mock = Mock()
-        self.sm_component.add_state("idle", on_tick=on_tick_mock)
-        self.sm_component.tick()
-        on_tick_mock.assert_called_once_with(self.entity, None)
+    def test_update_calls_on_update(self):
+        on_update_mock = Mock()
+        self.sm_component.add_state("idle", on_update=on_update_mock)
+        self.sm_component.update()
+        on_update_mock.assert_called_once_with(self.entity, None)
 
 class TestTimerComponent(unittest.TestCase):
     def setUp(self):
         self.entity = Mock()
-        self.entity.scene = Mock()
-        self.entity.scene.delta_time = 1.0 # Use 1 second for easier testing
+        self.entity.delta_time = 1.0 # Use 1 second for easier testing
         self.timer_component = TimerComponent()
         self.timer_component.attach(self.entity)
 
@@ -175,10 +174,10 @@ class TestTimerComponent(unittest.TestCase):
         self.assertTrue(self.timer_component.is_timer_running("test_timer"))
         self.assertEqual(self.timer_component.get_time_left("test_timer"), 2.0)
 
-        self.timer_component.tick() # 1 second passes
+        self.timer_component.update() # 1 second passes
         self.assertEqual(self.timer_component.get_time_left("test_timer"), 1.0)
 
-        self.timer_component.tick() # 1 second passes, timer should trigger and be removed
+        self.timer_component.update() # 1 second passes, timer should trigger and be removed
         callback_mock.assert_called_once_with(self.entity)
         self.assertFalse(self.timer_component.is_timer_running("test_timer"))
 
@@ -186,28 +185,28 @@ class TestTimerComponent(unittest.TestCase):
         callback_mock = Mock()
         self.timer_component.add_timer("loop_timer", 1.0, callback_mock, loop=True)
 
-        self.timer_component.tick() # 1 second passes, first trigger
+        self.timer_component.update() # 1 second passes, first trigger
         callback_mock.assert_called_once_with(self.entity)
         self.assertTrue(self.timer_component.is_timer_running("loop_timer"))
         self.assertEqual(self.timer_component.get_time_left("loop_timer"), 1.0)
 
         callback_mock.reset_mock()
-        self.timer_component.tick() # 1 second passes, second trigger
+        self.timer_component.update() # 1 second passes, second trigger
         callback_mock.assert_called_once_with(self.entity)
 
     def test_pause_resume_timer(self):
         callback_mock = Mock()
         self.timer_component.add_timer("pause_timer", 3.0, callback_mock)
 
-        self.timer_component.tick() # 1 second passes
+        self.timer_component.update() # 1 second passes
         self.assertEqual(self.timer_component.get_time_left("pause_timer"), 2.0)
 
         self.timer_component.pause_timer("pause_timer")
-        self.timer_component.tick() # Should not tick down
+        self.timer_component.update() # Should not tick down
         self.assertEqual(self.timer_component.get_time_left("pause_timer"), 2.0)
 
         self.timer_component.resume_timer("pause_timer")
-        self.timer_component.tick() # 1 second passes
+        self.timer_component.update() # 1 second passes
         self.assertEqual(self.timer_component.get_time_left("pause_timer"), 1.0)
 
     def test_cancel_timer(self):
@@ -217,7 +216,7 @@ class TestTimerComponent(unittest.TestCase):
 
         self.timer_component.cancel_timer("cancel_timer")
         self.assertFalse(self.timer_component.is_timer_running("cancel_timer"))
-        self.timer_component.tick() # Should not trigger callback
+        self.timer_component.update() # Should not trigger callback
         callback_mock.assert_not_called()
 
 if __name__ == '__main__':

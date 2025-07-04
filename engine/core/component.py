@@ -11,7 +11,7 @@ class Component:
         """Called when the component is detached from an entity"""
         self.entity = None
 
-    def tick(self):
+    def update(self):
         """Update logic for the component"""
         pass
 

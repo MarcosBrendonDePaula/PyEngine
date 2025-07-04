@@ -56,15 +56,15 @@ class DayNightCycleScene(BaseScene):
             size = random.randint(1, 3)
             self.stars.append((x, y, size))
         
-    def update(self):
+    def update(self, delta_time: float):
         """Update scene state"""
-        super().update()
+        super().update(delta_time)
         
         if not self._is_loaded:
             return
             
-        # Update time (assuming 60 FPS for now)
-        self.time += 1/60
+        # Update time using delta_time
+        self.time += delta_time
         cycle_progress = (self.time % self.day_length) / self.day_length
         
         # Calculate celestial body positions

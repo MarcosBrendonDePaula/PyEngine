@@ -58,7 +58,7 @@ class TextureRenderer(Component):
         """
         self.texture = texture
 
-    def update(self, dt):
+    def update(self):
         pass
 
     def render(self, screen, position):

@@ -1,0 +1,52 @@
+{
+  "launcher": {
+    "title": "PyEngine Examples Launcher",
+    "version": "1.0.0",
+    "window": {
+      "width": 800,
+      "height": 600,
+      "resizable": false
+    },
+    "threading": {
+      "enabled": true,
+      "auto_detect": true,
+      "cpu_usage_percent": 75
+    }
+  },
+  "ui": {
+    "theme": {
+      "background_color": [20, 20, 25],
+      "sidebar_color": [25, 25, 35],
+      "card_background": [45, 45, 55],
+      "primary_color": [100, 149, 237],
+      "text_color": [255, 255, 255],
+      "secondary_text": [200, 200, 200]
+    },
+    "layout": {
+      "sidebar_width": 250,
+      "cards_per_row": 3,
+      "card_spacing": 20,
+      "card_width": 280,
+      "card_height": 180
+    },
+    "animations": {
+      "enabled": true,
+      "hover_scale": 1.05,
+      "animation_speed": 6.0,
+      "particle_count": 30
+    }
+  },
+  "examples": {
+    "auto_discover": true,
+    "show_difficulty": true,
+    "show_threading_indicator": true,
+    "default_category": "All",
+    "launch_timeout": 30
+  },
+  "advanced": {
+    "debug_mode": false,
+    "log_launches": true,
+    "cache_example_info": true,
+    "max_concurrent_examples": 3
+  }
+}

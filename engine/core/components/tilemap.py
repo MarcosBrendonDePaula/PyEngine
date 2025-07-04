@@ -8,7 +8,7 @@ class TileMap(Component):
         self.tileset = pygame.image.load(tileset_path).convert_alpha()
         self.map_data = map_data  # 2D list of tile indices
 
-    def tick(self):
+    def update(self):
         pass  # Static tilemap has no update logic by default
 
     def render(self, screen: pygame.Surface, offset=(0, 0)):

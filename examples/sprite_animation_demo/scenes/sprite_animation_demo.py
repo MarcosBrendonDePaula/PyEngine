@@ -212,16 +212,16 @@ class SpriteAnimationDemo(BaseScene):
                 if self.sprite_animation:
                     self.sprite_animation.play("idle")
     
-    def update(self, delta):
+    def update(self, delta_time: float):
         """Update the scene"""
-        super().update(delta)
+        super().update(delta_time)
         
         # Update character position based on walking state
         if self.character and (self.walking_left or self.walking_right):
             if self.walking_left:
-                self.character.position.x -= 100 * delta  # Speed based on delta time
+                self.character.position.x -= 100 * delta_time  # Speed based on delta time
             elif self.walking_right:
-                self.character.position.x += 100 * delta  # Speed based on delta time
+                self.character.position.x += 100 * delta_time  # Speed based on delta time
             
             # Keep character on screen
             screen_width = 800  # Assuming screen width, adjust as needed
